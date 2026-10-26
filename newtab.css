@@ -863,6 +863,41 @@ body {
   animation: fadeIn 0.3s ease;
 }
 
+.quick-access-bar.minimal {
+  max-width: 820px;
+  margin-top: 20px;
+  margin-bottom: 6px;
+  align-items: center;
+}
+
+.quick-access-bar.minimal .quick-access-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.quick-access-bar.minimal .qa-item {
+  width: 78px;
+  padding: 8px 6px 7px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+}
+
+.quick-access-bar.minimal .qa-item:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+}
+
+.quick-access-bar.minimal .qa-badge {
+  display: none;
+}
+
 .quick-access-header {
   display: flex;
   align-items: center;

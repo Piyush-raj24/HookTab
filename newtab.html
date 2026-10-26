@@ -24,30 +24,21 @@
     <!-- Top Navigation Bar -->
     <header class="top-nav">
       <div class="nav-left">
-        <div class="brand-badge">
+        <div class="brand-badge" title="HookTab Visual Dashboard">
           <div class="brand-icon">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
             </svg>
           </div>
           <span class="brand-title">HookTab</span>
-          <span id="bookmarks-count-pill" class="badge-count">112</span>
         </div>
-        <button id="btn-sync-brave" class="ghost-btn" title="Two-Way Browser Sync (Brave Sync / Chrome Sync)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-          <span>Browser Sync</span>
-        </button>
       </div>
 
-      <!-- Time, Greeting & Mini Weather in Center -->
+      <!-- Time & Mini Weather in Center -->
       <div class="nav-center">
         <div class="time-widget">
           <div id="clock-display" class="clock-display">00:00</div>
-          <div class="date-greeting-row">
-            <span id="greeting-display" class="greeting-text">Welcome</span>
-            <span class="dot-separator">•</span>
-            <span id="date-display" class="date-text">Loading date...</span>
-          </div>
+          <span id="date-display" class="date-text">Loading date...</span>
         </div>
         <!-- Mini Privacy-Friendly Weather Widget -->
         <div id="weather-widget" class="weather-widget" role="button" tabindex="0" title="Live Weather • Click to switch °C / °F">
@@ -62,28 +53,12 @@
         </div>
       </div>
 
-      <!-- Action Buttons on Right -->
+      <!-- Clean Action Icons on Right -->
       <div class="nav-right">
-        <!-- Layout Switcher -->
-        <div class="layout-toggle-group">
-          <button id="layout-cards" class="icon-toggle" title="Individual Cards View">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-          </button>
-          <button id="layout-board" class="icon-toggle active" title="Google Keep Board View">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="13" rx="1"/><rect x="17" y="3" width="5" height="16" rx="1"/></svg>
-          </button>
-          <button id="layout-compact" class="icon-toggle" title="Compact 100+ Matrix View">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="4" height="4"/><rect x="10" y="3" width="4" height="4"/><rect x="17" y="3" width="4" height="4"/><rect x="3" y="10" width="4" height="4"/><rect x="10" y="10" width="4" height="4"/><rect x="17" y="10" width="4" height="4"/><rect x="3" y="17" width="4" height="4"/><rect x="10" y="17" width="4" height="4"/><rect x="17" y="17" width="4" height="4"/></svg>
-          </button>
-          <button id="layout-list" class="icon-toggle" title="List View">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-          </button>
-        </div>
-
         <!-- Add Bookmark Button -->
-        <button id="btn-add-bookmark" class="primary-btn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          <span>Add Bookmark</span>
+        <button id="btn-add-bookmark" class="ghost-btn sm" title="Add Bookmark (Alt+H)">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <span>Bookmark</span>
         </button>
 
         <!-- Quick Notes Button -->
@@ -91,14 +66,9 @@
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
         </button>
 
-        <!-- Privacy Mode Button (Blur for screen-sharing) -->
-        <button id="btn-privacy-toggle" class="ghost-btn icon-only" title="Privacy Mode (Blur Bookmarks for Screen Sharing) • Alt+P">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-        </button>
-
-        <!-- Customizer Studio Drawer Button -->
-        <button id="btn-open-customizer" class="ghost-btn icon-only" title="Themes & Wallpapers">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="13.5" cy="6.5" r=".5" fill="currentColor"/><circle cx="17.5" cy="10.5" r=".5" fill="currentColor"/><circle cx="8.5" cy="7.5" r=".5" fill="currentColor"/><circle cx="6.5" cy="12.5" r=".5" fill="currentColor"/><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.992 6.307 17.5 2 12 2z"/></svg>
+        <!-- Customizer Studio Drawer / Settings Button -->
+        <button id="btn-open-customizer" class="ghost-btn icon-only" title="Settings, Themes & Tools">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
         </button>
       </div>
     </header>
@@ -162,104 +132,29 @@
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </button>
           </form>
-
-          <!-- Search Mode Switcher Pill -->
-          <div class="search-mode-pill">
-            <button id="mode-web" class="mode-btn active">Web</button>
-            <button id="mode-bookmarks" class="mode-btn">Bookmarks</button>
-          </div>
         </div>
 
         <!-- Live Suggestions / Auto-complete Dropdown -->
         <div id="search-suggestions" class="search-suggestions hidden"></div>
 
-        <!-- QUICK ACCESS: MOST USED & RECENT WEBSITES -->
-        <div id="quick-access-bar" class="quick-access-bar">
-          <div class="quick-access-header">
-            <div class="qa-tabs">
-              <button type="button" id="qa-tab-frequent" class="qa-tab active" title="Most visited websites">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                <span>Most Used</span>
-              </button>
-              <button type="button" id="qa-tab-recent" class="qa-tab" title="Recently opened websites">
-                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                <span>Recently Visited</span>
-              </button>
-            </div>
-            <span id="qa-indicator-label" class="qa-indicator-label">Top Sites</span>
-          </div>
+        <!-- QUICK ACCESS: SLEEK FLOATING APP TILES -->
+        <div id="quick-access-bar" class="quick-access-bar minimal">
           <div id="quick-access-grid" class="quick-access-grid">
             <!-- Dynamically populated app tiles -->
           </div>
         </div>
       </section>
 
-      <!-- BOOKMARKS HUB SECTION -->
+      <!-- BOOKMARKS HUB SECTION (Google Keep Masonry Grid) -->
       <section class="bookmarks-section">
-        <!-- MULTIPLE PAGES BAR (Work, Personal, Projects...) -->
-        <div class="pages-bar" id="pages-bar">
-          <div class="pages-tabs" id="pages-tabs">
-            <!-- Dynamically populated: Personal, Work, Projects, etc. -->
-          </div>
-          <button type="button" id="btn-add-page" class="ghost-btn xs add-page-btn" title="Create New Page">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            <span>New Page</span>
-          </button>
-        </div>
-
-        <!-- Bookmarks Control Bar -->
-        <div class="bookmarks-toolbar">
-          <!-- Category Tabs (Horizontal Scrollable) -->
-          <div id="category-tabs" class="category-tabs">
-            <!-- Dynamic categories rendered here -->
-          </div>
-
-          <!-- Secondary Toolbar: Filter Search & Quick Actions -->
-          <div class="bookmarks-filter-row">
-            <div class="filter-search-wrap">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              <input type="text" id="bookmark-filter-input" placeholder="Filter bookmarks (by title, url, tags)...">
-            </div>
-            
-            <div class="filter-tools">
-              <select id="sort-select" class="custom-select" title="Sort Bookmarks">
-                <option value="recent">Recently Added</option>
-                <option value="alpha">Alphabetical (A-Z)</option>
-                <option value="visits">Most Visited</option>
-              </select>
-              <button id="btn-auto-categorize" class="ghost-btn sm" title="Auto-Categorize Bookmarks using Smart Intelligence">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                <span>Auto-Categorize</span>
-              </button>
-              <button id="btn-import-browser" class="ghost-btn sm" title="Import Chrome / Brave Bookmarks in 1 Click">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                <span>Import Bookmarks</span>
-              </button>
-              <button id="btn-export-json" class="ghost-btn sm" title="Backup Bookmarks as JSON">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                <span>JSON</span>
-              </button>
-              <button id="btn-export-html" class="ghost-btn sm" title="Export Universal Netscape HTML Bookmark File (Chrome, Brave, Firefox, Edge, Safari compatible)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                <span>HTML</span>
-              </button>
-              <label for="import-file-input" class="ghost-btn sm clickable" title="Import JSON / HTML Bookmarks">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-                <span>File</span>
-                <input type="file" id="import-file-input" accept=".json,.html" class="hidden">
-              </label>
-            </div>
-          </div>
+        <!-- Google Keep & Lumilist Board Container (Masonry Cards with + Add Board) -->
+        <div id="lumilist-board" class="lumilist-board">
+          <!-- Dynamic Google Keep Board Cards Rendered via JS -->
         </div>
 
         <!-- Bookmarks Grid Container (Individual Cards / Compact / List) -->
         <div id="bookmarks-grid" class="bookmarks-grid hidden">
           <!-- Dynamic Bookmark Cards Rendered via JS in Batches -->
-        </div>
-
-        <!-- Google Keep & Lumilist Board Container (Masonry Cards with + Add Board) -->
-        <div id="lumilist-board" class="lumilist-board">
-          <!-- Dynamic Google Keep Board Cards Rendered via JS -->
         </div>
 
         <!-- Infinite Scroll Sentinel & Load More Indicator -->
@@ -530,17 +425,64 @@
         </span>
       </section>
 
+      <!-- DISPLAY & LAYOUT CONTROLS -->
+      <section class="drawer-section">
+        <h3>🗂️ Display & Layout View</h3>
+        <p class="section-sub">
+          Switch bookmark layout view or toggle privacy screen blur.
+        </p>
+        <div class="layout-toggle-group" style="display: flex; gap: 6px; width: 100%; margin-bottom: 10px;">
+          <button id="layout-board" class="layout-btn active" title="Google Keep Style Masonry Board Grid" style="flex: 1; justify-content: center; gap: 4px; padding: 6px 4px; font-size: 0.72rem;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+            <span>Boards</span>
+          </button>
+          <button id="layout-cards" class="layout-btn" title="Individual Bookmark Cards" style="flex: 1; justify-content: center; gap: 4px; padding: 6px 4px; font-size: 0.72rem;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+            <span>Cards</span>
+          </button>
+          <button id="layout-compact" class="layout-btn" title="Compact Matrix View" style="flex: 1; justify-content: center; gap: 4px; padding: 6px 4px; font-size: 0.72rem;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+            <span>Compact</span>
+          </button>
+          <button id="layout-list" class="layout-btn" title="List Details View" style="flex: 1; justify-content: center; gap: 4px; padding: 6px 4px; font-size: 0.72rem;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            <span>List</span>
+          </button>
+        </div>
+        <button id="btn-privacy-toggle" class="ghost-btn sm" style="width: 100%; justify-content: center; gap: 6px;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          <span>Privacy Mode (Screen Blur)</span>
+        </button>
+      </section>
+
       <!-- PREFERENCES & BACKUP -->
       <section class="drawer-section">
-        <h3>⚙️ Database & Backup</h3>
+        <h3>⚙️ Database & Bookmarks Backup</h3>
         <p class="section-sub">
-          Export full backup or reset for a clean slate.
+          Import from browser, backup to file, or auto-organize your bookmarks.
         </p>
-        <div class="reset-actions-row" style="display: flex; gap: 8px; flex-wrap: wrap;">
-          <button id="btn-drawer-auto-categorize" class="ghost-btn sm" style="width: 100%; justify-content: center;">🪄 Auto-Categorize All Bookmarks</button>
-          <button id="btn-drawer-export" class="ghost-btn sm" style="flex: 1; justify-content: center;">Export JSON</button>
-          <button id="btn-drawer-export-html" class="ghost-btn sm" style="flex: 1; justify-content: center;">Export HTML</button>
-          <button id="btn-clear-all" class="ghost-btn sm danger" style="flex: 1; justify-content: center;">Clear All</button>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <button id="btn-import-browser" class="primary-btn sm" style="width: 100%; justify-content: center; gap: 8px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>1-Click Import Browser Bookmarks</span>
+          </button>
+          
+          <div style="display: flex; gap: 8px;">
+            <label for="import-file-input" class="ghost-btn sm clickable" style="flex: 1; justify-content: center; gap: 6px;" title="Import JSON or Netscape HTML file">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              <span>Import File</span>
+              <input type="file" id="import-file-input" accept=".json,.html" class="hidden">
+            </label>
+            <button id="btn-drawer-auto-categorize" class="ghost-btn sm" style="flex: 1; justify-content: center; gap: 6px;">
+              <span>🪄 Auto-Sort</span>
+            </button>
+          </div>
+
+          <div class="reset-actions-row" style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <button id="btn-drawer-export" class="ghost-btn sm" style="flex: 1; justify-content: center;">Export JSON</button>
+            <button id="btn-drawer-export-html" class="ghost-btn sm" style="flex: 1; justify-content: center;">Export HTML</button>
+            <button id="btn-clear-all" class="ghost-btn sm danger" style="flex: 1; justify-content: center;">Clear All</button>
+          </div>
         </div>
       </section>
 

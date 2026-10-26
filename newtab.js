@@ -664,11 +664,11 @@
       const now = new Date();
       const hours = String(now.getHours()).padStart(2, '0');
       const minutes = String(now.getMinutes()).padStart(2, '0');
-      dom.clock.textContent = `${hours}:${minutes}`;
+      if (dom.clock) dom.clock.textContent = `${hours}:${minutes}`;
 
       // Date: e.g., Monday, October 26
       const dateOpts = { weekday: 'long', month: 'short', day: 'numeric' };
-      dom.date.textContent = now.toLocaleDateString(undefined, dateOpts);
+      if (dom.date) dom.date.textContent = now.toLocaleDateString(undefined, dateOpts);
 
       // Greeting based on hour
       const hr = now.getHours();
@@ -678,7 +678,7 @@
       else if (hr >= 17 && hr < 22) greeting = 'Good evening';
       else greeting = 'Night owl mode';
 
-      dom.greeting.textContent = greeting;
+      if (dom.greeting) dom.greeting.textContent = greeting;
     }
     tick();
     setInterval(tick, 1000);
@@ -1197,9 +1197,13 @@
 
     if (state.searchMode === 'bookmarks') {
       // Focus bookmark filter
-      dom.bookmarkFilterInput.value = query;
+      if (dom.bookmarkFilterInput) dom.bookmarkFilterInput.value = query;
       filterBookmarks(query);
-      dom.bookmarksGrid.scrollIntoView({ behavior: 'smooth' });
+      if (dom.lumilistBoard && state.currentLayout === 'board') {
+        dom.lumilistBoard.scrollIntoView({ behavior: 'smooth' });
+      } else if (dom.bookmarksGrid) {
+        dom.bookmarksGrid.scrollIntoView({ behavior: 'smooth' });
+      }
       return;
     }
 
@@ -1474,6 +1478,11 @@
   }
 
   function renderCategoryTabs() {
+    if (dom.bookmarksCountPill) {
+      dom.bookmarksCountPill.textContent = state.bookmarks.length;
+    }
+    if (!dom.categoryTabs) return;
+
     const categories = getCategories();
     dom.categoryTabs.innerHTML = '';
     const pageBookmarks = state.bookmarks.filter(b => (b.page || 'Personal') === (state.activePage || 'Personal'));
@@ -1503,8 +1512,9 @@
       dom.categoryTabs.appendChild(tab);
     });
 
-    // Update global bookmarks badge counter
-    dom.bookmarksCountPill.textContent = state.bookmarks.length;
+    if (dom.bookmarksCountPill) {
+      dom.bookmarksCountPill.textContent = state.bookmarks.length;
+    }
   }
 
   function setCategory(cat) {
@@ -1715,13 +1725,16 @@
   let sentinelObserver = null;
 
   function renderBookmarks() {
-    let list = state.bookmarks.filter(b => (b.page || 'Personal') === (state.activePage || 'Personal'));
+    let list = state.bookmarks;
+    if (state.currentLayout !== 'board') {
+      list = list.filter(b => (b.page || 'Personal') === (state.activePage || 'Personal'));
 
-    // Filter by Category
-    if (state.activeCategory === 'Favorites') {
-      list = list.filter(b => b.favorite);
-    } else if (state.activeCategory !== 'All') {
-      list = list.filter(b => b.category === state.activeCategory);
+      // Filter by Category
+      if (state.activeCategory === 'Favorites') {
+        list = list.filter(b => b.favorite);
+      } else if (state.activeCategory !== 'All') {
+        list = list.filter(b => b.category === state.activeCategory);
+      }
     }
 
     // Filter by Search Query
@@ -3219,20 +3232,24 @@
     }
 
     // Search Mode Switcher (Web vs Bookmarks)
-    dom.modeWeb.addEventListener('click', () => {
-      state.searchMode = 'web';
-      dom.modeWeb.classList.add('active');
-      dom.modeBookmarks.classList.remove('active');
-      const eng = getEngineConfig(state.searchEngine);
-      dom.searchInput.placeholder = `Search ${eng.name} or type URL... (Press / to focus)`;
-    });
+    if (dom.modeWeb) {
+      dom.modeWeb.addEventListener('click', () => {
+        state.searchMode = 'web';
+        dom.modeWeb.classList.add('active');
+        if (dom.modeBookmarks) dom.modeBookmarks.classList.remove('active');
+        const eng = getEngineConfig(state.searchEngine);
+        dom.searchInput.placeholder = `Search ${eng.name} or type URL... (Press / to focus)`;
+      });
+    }
 
-    dom.modeBookmarks.addEventListener('click', () => {
-      state.searchMode = 'bookmarks';
-      dom.modeBookmarks.classList.add('active');
-      dom.modeWeb.classList.remove('active');
-      dom.searchInput.placeholder = 'Search within your Bookmarks...';
-    });
+    if (dom.modeBookmarks) {
+      dom.modeBookmarks.addEventListener('click', () => {
+        state.searchMode = 'bookmarks';
+        dom.modeBookmarks.classList.add('active');
+        if (dom.modeWeb) dom.modeWeb.classList.remove('active');
+        dom.searchInput.placeholder = 'Search within your Bookmarks...';
+      });
+    }
 
     // Voice Search
     initVoiceSearch();
@@ -3257,30 +3274,34 @@
     // Close suggestions and popovers when clicking outside
     document.addEventListener('click', (e) => {
       if (!e.target.closest('#engine-picker-wrap')) {
-        dom.enginePopover.classList.add('hidden');
+        if (dom.enginePopover) dom.enginePopover.classList.add('hidden');
       }
       if (!e.target.closest('.search-section')) {
-        dom.searchSuggestions.classList.add('hidden');
+        if (dom.searchSuggestions) dom.searchSuggestions.classList.add('hidden');
       }
     });
 
     // Layout Switchers
-    dom.layoutCards.addEventListener('click', () => applyLayout('cards'));
+    if (dom.layoutCards) dom.layoutCards.addEventListener('click', () => applyLayout('cards'));
     if (dom.layoutBoard) dom.layoutBoard.addEventListener('click', () => applyLayout('board'));
-    dom.layoutCompact.addEventListener('click', () => applyLayout('compact'));
-    dom.layoutList.addEventListener('click', () => applyLayout('list'));
+    if (dom.layoutCompact) dom.layoutCompact.addEventListener('click', () => applyLayout('compact'));
+    if (dom.layoutList) dom.layoutList.addEventListener('click', () => applyLayout('list'));
 
     // Filter Bookmarks
-    dom.bookmarkFilterInput.addEventListener('input', (e) => {
-      filterBookmarks(e.target.value.trim());
-    });
+    if (dom.bookmarkFilterInput) {
+      dom.bookmarkFilterInput.addEventListener('input', (e) => {
+        filterBookmarks(e.target.value.trim());
+      });
+    }
 
     // Sort Dropdown
-    dom.sortSelect.addEventListener('change', (e) => {
-      state.currentSort = e.target.value;
-      storage.set({ currentSort: state.currentSort });
-      renderBookmarks();
-    });
+    if (dom.sortSelect) {
+      dom.sortSelect.addEventListener('change', (e) => {
+        state.currentSort = e.target.value;
+        storage.set({ currentSort: state.currentSort });
+        renderBookmarks();
+      });
+    }
 
     // Add Bookmark
     dom.btnAddBookmark.addEventListener('click', openAddModal);

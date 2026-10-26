@@ -2058,12 +2058,15 @@
   // =========================================================================
   // LUMILIST & GOOGLE KEEP BOARD RENDERER (Masonry Cards & Add Board)
   // =========================================================================
+  let currentDraggedBoardName = null;
+  let currentDraggedBookmarkId = null;
+
   function renderLumilistBoard(list) {
     if (!dom.lumilistBoard) return;
     dom.lumilistBoard.innerHTML = '';
 
     // Collect all boards: customBoards plus any categories from bookmarks
-    const boardSet = new Set(state.customBoards || ['Other bookmarks', 'kk', 'kl']);
+    const boardSet = new Set(state.customBoards || ['Other bookmarks', 'Work', 'Personal']);
     list.forEach(bm => {
       const cat = bm.category || 'Other bookmarks';
       boardSet.add(cat);
@@ -2079,8 +2082,11 @@
 
       card.innerHTML = `
         <div class="keep-board-header">
-          <span class="keep-board-title" title="${escapeHtml(boardName)}">${escapeHtml(boardName)}</span>
+          <span class="keep-board-title" title="Click edit or double-click to rename">${escapeHtml(boardName)}</span>
           <div class="keep-board-actions">
+            <button type="button" class="keep-board-action-btn btn-board-edit" title="Rename Board">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            </button>
             <button type="button" class="keep-board-action-btn btn-board-add" title="Add Bookmark to ${escapeHtml(boardName)}">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
             </button>
@@ -2093,7 +2099,74 @@
         <div class="keep-board-body" data-drop-board="${escapeHtml(boardName)}"></div>
       `;
 
+      const titleSpan = card.querySelector('.keep-board-title');
       const body = card.querySelector('.keep-board-body');
+
+      // Inline Title Rename
+      function startRenaming() {
+        const currentTitle = boardName;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'keep-board-rename-input';
+        input.value = currentTitle;
+        input.maxLength = 30;
+
+        titleSpan.replaceWith(input);
+        input.focus();
+        input.select();
+
+        let finished = false;
+        function finishRename() {
+          if (finished) return;
+          finished = true;
+          const newName = input.value.trim();
+          if (newName && newName !== currentTitle) {
+            if (!Array.isArray(state.customBoards)) state.customBoards = [];
+            const idx = state.customBoards.indexOf(currentTitle);
+            if (idx !== -1) {
+              state.customBoards[idx] = newName;
+            } else {
+              state.customBoards.push(newName);
+            }
+            state.bookmarks.forEach(b => {
+              if (b.category === currentTitle) {
+                b.category = newName;
+              }
+            });
+            storage.set({
+              customBoards: state.customBoards,
+              bookmarks: state.bookmarks
+            });
+            renderCategoryTabs();
+            renderBookmarks();
+            showToast(`Board renamed to "${newName}"`);
+          } else {
+            input.replaceWith(titleSpan);
+          }
+        }
+
+        input.addEventListener('blur', finishRename);
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            finishRename();
+          } else if (e.key === 'Escape') {
+            e.preventDefault();
+            finished = true;
+            input.replaceWith(titleSpan);
+          }
+        });
+      }
+
+      titleSpan.addEventListener('dblclick', (e) => {
+        e.stopPropagation();
+        startRenaming();
+      });
+
+      card.querySelector('.btn-board-edit').addEventListener('click', (e) => {
+        e.stopPropagation();
+        startRenaming();
+      });
 
       // Populate bookmark items inside this board
       colBookmarks.forEach(bm => {
@@ -2144,6 +2217,8 @@
         row.addEventListener('dragstart', (e) => {
           e.stopPropagation();
           row.classList.add('dragging');
+          currentDraggedBookmarkId = bm.id;
+          currentDraggedBoardName = null;
           e.dataTransfer.effectAllowed = 'move';
           e.dataTransfer.setData('text/plain', bm.id);
           e.dataTransfer.setData('source-type', 'bookmark');
@@ -2151,6 +2226,7 @@
 
         row.addEventListener('dragend', () => {
           row.classList.remove('dragging');
+          currentDraggedBookmarkId = null;
         });
 
         body.appendChild(row);
@@ -2158,9 +2234,11 @@
 
       // Board Drag & Drop: Dropping bookmark into board body
       body.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        body.classList.add('drag-over-board');
+        if (currentDraggedBookmarkId) {
+          e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
+          body.classList.add('drag-over-board');
+        }
       });
 
       body.addEventListener('dragleave', (e) => {
@@ -2170,12 +2248,12 @@
       });
 
       body.addEventListener('drop', (e) => {
-        e.preventDefault();
         body.classList.remove('drag-over-board');
-        const draggedId = e.dataTransfer.getData('text/plain');
-        const sourceType = e.dataTransfer.getData('source-type');
+        const draggedId = currentDraggedBookmarkId || e.dataTransfer.getData('text/plain');
 
-        if (sourceType === 'bookmark' && draggedId) {
+        if (draggedId) {
+          e.preventDefault();
+          e.stopPropagation();
           const item = state.bookmarks.find(b => b.id === draggedId);
           if (item && item.category !== boardName) {
             item.category = boardName;
@@ -2184,6 +2262,7 @@
             renderBookmarks();
             showToast(`Moved to ${boardName}`);
           }
+          currentDraggedBookmarkId = null;
         }
       });
 
@@ -2212,33 +2291,45 @@
 
       // Board Reordering Drag & Drop
       card.addEventListener('dragstart', (e) => {
-        if (e.target.closest('.keep-item-row')) return; // don't drag card if dragging a row
+        if (e.target.closest('.keep-item-row') || e.target.closest('input')) return;
         card.classList.add('board-dragging');
+        currentDraggedBoardName = boardName;
+        currentDraggedBookmarkId = null;
+        e.dataTransfer.effectAllowed = 'move';
         e.dataTransfer.setData('board-name', boardName);
         e.dataTransfer.setData('source-type', 'board');
       });
 
       card.addEventListener('dragend', () => {
         card.classList.remove('board-dragging');
+        document.querySelectorAll('.keep-board-card').forEach(c => c.classList.remove('board-drag-over'));
+        currentDraggedBoardName = null;
       });
 
       card.addEventListener('dragover', (e) => {
-        if (e.dataTransfer.getData('source-type') === 'board') {
+        if (currentDraggedBoardName && currentDraggedBoardName !== boardName) {
           e.preventDefault();
+          e.dataTransfer.dropEffect = 'move';
           card.classList.add('board-drag-over');
         }
       });
 
-      card.addEventListener('dragleave', () => {
-        card.classList.remove('board-drag-over');
+      card.addEventListener('dragleave', (e) => {
+        if (!card.contains(e.relatedTarget)) {
+          card.classList.remove('board-drag-over');
+        }
       });
 
       card.addEventListener('drop', (e) => {
         card.classList.remove('board-drag-over');
-        const sourceBoard = e.dataTransfer.getData('board-name');
+        const sourceBoard = currentDraggedBoardName || e.dataTransfer.getData('board-name');
         if (sourceBoard && sourceBoard !== boardName) {
           e.preventDefault();
-          let boards = state.customBoards || ['Other bookmarks', 'kk', 'kl'];
+          e.stopPropagation();
+          let boards = [...(state.customBoards || [])];
+          if (!boards.includes(sourceBoard)) boards.push(sourceBoard);
+          if (!boards.includes(boardName)) boards.push(boardName);
+
           const fromIdx = boards.indexOf(sourceBoard);
           const toIdx = boards.indexOf(boardName);
           if (fromIdx !== -1 && toIdx !== -1) {
@@ -2247,7 +2338,9 @@
             state.customBoards = boards;
             storage.set({ customBoards: state.customBoards });
             renderBookmarks();
+            showToast(`Moved "${sourceBoard}"`);
           }
+          currentDraggedBoardName = null;
         }
       });
 

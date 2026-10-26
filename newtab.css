@@ -1660,6 +1660,20 @@ body[data-layout="board"] #lumilist-board {
   cursor: grab;
 }
 
+.keep-board-rename-input {
+  background: var(--bg-card);
+  border: 1px solid var(--accent-color);
+  border-radius: 6px;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  outline: none;
+  box-shadow: 0 0 10px var(--accent-glow);
+  width: 150px;
+}
+
 .keep-board-actions {
   display: flex;
   align-items: center;

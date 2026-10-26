@@ -1150,13 +1150,50 @@ body.privacy-mode .bookmark-card:hover .bm-favicon-wrap {
    BOOKMARK LAYOUTS: CARDS / COMPACT MATRIX / LIST
    ========================================================================== */
 
-/* 1. CARDS VIEW (Default) */
+/* 1. GOOGLE KEEP CARDS VIEW (Default) */
 body[data-layout="cards"] .bookmarks-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.keep-section-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  margin: 10px 0 2px;
+}
+
+.keep-section-header::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color);
+  opacity: 0.6;
+}
+
+.keep-badge {
+  font-size: 0.68rem;
+  background: var(--bg-glass-hover);
+  border: 1px solid var(--border-color);
+  padding: 1px 7px;
+  border-radius: 99px;
+  color: var(--text-secondary);
+}
+
+.keep-subgrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 14px;
 }
 
+/* Google Keep Card Surface */
 .bookmark-card {
   background: var(--bg-card);
   backdrop-filter: blur(16px);
@@ -1165,18 +1202,24 @@ body[data-layout="cards"] .bookmarks-grid {
   border-radius: var(--card-radius);
   padding: 14px;
   display: flex;
-  align-items: flex-start;
-  gap: 12px;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 120px;
   text-decoration: none;
   color: inherit;
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow-sm);
-  transition: all var(--transition-normal);
-  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+  cursor: grab;
+  user-select: none;
 }
 
-/* Subtle top gradient accent indicator on active and hover cards */
+.bookmark-card:active {
+  cursor: grabbing;
+}
+
+/* Subtle top gradient accent indicator */
 .bookmark-card::before {
   content: '';
   position: absolute;
@@ -1196,8 +1239,23 @@ body[data-layout="cards"] .bookmarks-grid {
   transform: scaleX(1);
 }
 
+/* Fluid Google Keep Movability & Drag Feedback */
+.bookmark-card.dragging {
+  opacity: 0.45 !important;
+  transform: scale(1.04) rotate(1.5deg) !important;
+  box-shadow: 0 16px 36px var(--accent-glow) !important;
+  border: 2px dashed var(--accent-color) !important;
+  z-index: 1000;
+}
+
+.bookmark-card.drag-over {
+  border-color: var(--accent-color) !important;
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px var(--accent-glow) !important;
+}
+
 .bookmark-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-4px);
   background: var(--bg-card-hover);
   border-color: var(--accent-color);
   box-shadow: var(--shadow-md), 0 0 16px var(--accent-glow);
@@ -1208,10 +1266,26 @@ body[data-layout="cards"] .bookmarks-grid {
   box-shadow: 0 0 16px var(--accent-glow);
 }
 
+/* Card Top Bar: Favicon + Domain + Keep Pin */
+.bm-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.bm-card-source {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .bm-favicon-wrap {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
   background: var(--bg-glass);
   border: 1px solid var(--border-color);
   display: flex;
@@ -1222,8 +1296,8 @@ body[data-layout="cards"] .bookmarks-grid {
 }
 
 .bm-favicon {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
   object-fit: contain;
   border-radius: 4px;
 }
@@ -1231,67 +1305,310 @@ body[data-layout="cards"] .bookmarks-grid {
 .bm-fallback-initial {
   font-family: var(--font-display);
   font-weight: 700;
-  font-size: 1rem;
+  font-size: 0.85rem;
   color: var(--accent-color);
 }
 
-.bm-info {
+.bm-domain {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Keep Pin Button */
+.bm-pin-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.5;
+  transition: all var(--transition-fast);
+}
+
+.bookmark-card:hover .bm-pin-btn {
+  opacity: 1;
+}
+
+.bm-pin-btn:hover {
+  color: var(--text-primary);
+  background: var(--bg-glass-hover);
+}
+
+.bm-pin-btn.pinned {
+  opacity: 1;
+  color: var(--accent-color);
+  filter: drop-shadow(0 0 6px var(--accent-glow));
+}
+
+/* Card Body */
+.bm-card-body {
   flex: 1;
-  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  margin-bottom: 8px;
 }
 
 .bm-title {
-  font-size: 0.9rem;
+  font-size: 0.92rem;
   font-weight: 600;
   color: var(--text-primary);
-  white-space: nowrap;
+  line-height: 1.35;
+  margin-bottom: 8px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  margin-bottom: 2px;
 }
 
-.bm-domain {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.bm-actions {
-  position: absolute;
-  top: 8px;
-  right: 8px;
+.bm-chips-row {
   display: flex;
   align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.bm-chip {
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 99px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.bm-chip.cat-chip {
+  background: rgba(99, 102, 241, 0.12);
+  color: var(--accent-color);
+  border-color: rgba(99, 102, 241, 0.25);
+}
+
+/* Bottom Action Toolstrip (Google Keep style, reveals on card hover) */
+.bm-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   gap: 4px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
   opacity: 0;
   transition: opacity var(--transition-fast);
 }
 
-.bookmark-card:hover .bm-actions {
+.bookmark-card:hover .bm-card-actions {
   opacity: 1;
 }
 
 .bm-action-btn {
-  background: var(--bg-card);
+  background: var(--bg-glass);
   border: 1px solid var(--border-color);
   border-radius: 6px;
   color: var(--text-secondary);
-  padding: 3px;
+  padding: 4px 6px;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: all var(--transition-fast);
 }
 
 .bm-action-btn:hover {
+  background: var(--bg-glass-hover);
   color: var(--text-primary);
   border-color: var(--accent-color);
 }
 
 .bm-action-btn.star-active {
   color: #f59e0b;
+}
+
+/* ==========================================================================
+   LUMILIST BOARD VIEW (KANBAN COLUMNS)
+   ========================================================================== */
+body[data-layout="board"] .bookmarks-grid,
+body[data-layout="board"] #bookmarks-sentinel {
+  display: none !important;
+}
+
+body[data-layout="board"] #lumilist-board {
+  display: flex !important;
+}
+
+.lumilist-board {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding: 8px 4px 28px;
+  min-height: 480px;
+  scrollbar-width: thin;
+  align-items: flex-start;
+}
+
+.lumilist-col {
+  width: 300px;
+  min-width: 300px;
+  max-width: 300px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 220px);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+}
+
+.lumilist-col:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: var(--shadow-md);
+}
+
+.lumilist-col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.lumilist-col-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.lumilist-col-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-gradient);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.lumilist-col-count {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 1px 7px;
+  border-radius: 99px;
+  background: var(--bg-glass-hover);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+}
+
+.lumilist-add-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.lumilist-add-btn:hover {
+  background: var(--bg-glass-hover);
+  color: var(--text-primary);
+}
+
+.lumilist-col-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 140px;
+  transition: background var(--transition-fast), outline var(--transition-fast);
+}
+
+.lumilist-col-body.drag-over-col {
+  background: rgba(99, 102, 241, 0.08);
+  border-radius: 12px;
+  outline: 2px dashed var(--accent-color);
+  outline-offset: -4px;
+}
+
+.lumilist-col-footer {
+  padding: 8px 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.lumilist-quick-add-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px dashed var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.lumilist-quick-add-btn:hover {
+  border-color: var(--accent-color);
+  color: var(--text-primary);
+  background: var(--bg-glass);
+}
+
+/* + Add Board Column */
+.lumilist-add-board-col {
+  width: 270px;
+  min-width: 270px;
+  min-height: 200px;
+  border: 2px dashed var(--border-color);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.02);
+  transition: all var(--transition-fast);
+  padding: 24px 16px;
+  text-align: center;
+}
+
+.lumilist-add-board-col:hover {
+  border-color: var(--accent-color);
+  color: var(--text-primary);
+  background: var(--bg-glass-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px var(--accent-glow);
+}
+
+.add-board-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent-color);
 }
 
 /* 2. COMPACT 100+ MATRIX VIEW */

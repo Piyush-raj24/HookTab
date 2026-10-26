@@ -80,6 +80,7 @@
     
     // Layout toggles
     layoutCards: document.getElementById('layout-cards'),
+    layoutBoard: document.getElementById('layout-board'),
     layoutCompact: document.getElementById('layout-compact'),
     layoutList: document.getElementById('layout-list'),
 
@@ -116,6 +117,7 @@
     bookmarkFilterInput: document.getElementById('bookmark-filter-input'),
     sortSelect: document.getElementById('sort-select'),
     bookmarksGrid: document.getElementById('bookmarks-grid'),
+    lumilistBoard: document.getElementById('lumilist-board'),
     bookmarksSentinel: document.getElementById('bookmarks-sentinel'),
     sentinelText: document.getElementById('sentinel-text'),
     emptyState: document.getElementById('empty-state'),
@@ -856,10 +858,12 @@
   function applyLayout(layout) {
     state.currentLayout = layout;
     document.body.setAttribute('data-layout', layout);
-    dom.layoutCards.classList.toggle('active', layout === 'cards');
-    dom.layoutCompact.classList.toggle('active', layout === 'compact');
-    dom.layoutList.classList.toggle('active', layout === 'list');
+    if (dom.layoutCards) dom.layoutCards.classList.toggle('active', layout === 'cards');
+    if (dom.layoutBoard) dom.layoutBoard.classList.toggle('active', layout === 'board');
+    if (dom.layoutCompact) dom.layoutCompact.classList.toggle('active', layout === 'compact');
+    if (dom.layoutList) dom.layoutList.classList.toggle('active', layout === 'list');
     storage.set({ currentLayout: layout });
+    renderBookmarks();
   }
 
   // =========================================================================
@@ -1253,12 +1257,276 @@
     if (list.length === 0) {
       dom.emptyState.classList.remove('hidden');
       if (dom.bookmarksSentinel) dom.bookmarksSentinel.classList.add('hidden');
+      if (dom.bookmarksGrid) dom.bookmarksGrid.innerHTML = '';
+      if (dom.lumilistBoard) dom.lumilistBoard.innerHTML = '';
       return;
     }
     dom.emptyState.classList.add('hidden');
 
+    // 1. LUMILIST BOARD VIEW (Kanban Columns)
+    if (state.currentLayout === 'board') {
+      if (dom.bookmarksGrid) dom.bookmarksGrid.classList.add('hidden');
+      if (dom.lumilistBoard) dom.lumilistBoard.classList.remove('hidden');
+      if (dom.bookmarksSentinel) dom.bookmarksSentinel.classList.add('hidden');
+      renderLumilistBoard(list);
+      return;
+    }
+
+    if (dom.lumilistBoard) dom.lumilistBoard.classList.add('hidden');
+    if (dom.bookmarksGrid) dom.bookmarksGrid.classList.remove('hidden');
+    dom.bookmarksGrid.innerHTML = '';
+
+    // 2. GOOGLE KEEP CARDS VIEW (PINNED & OTHERS SECTIONS)
+    if (state.currentLayout === 'cards' && state.activeCategory === 'All' && !state.searchQuery) {
+      const pinned = list.filter(b => b.favorite);
+      const others = list.filter(b => !b.favorite);
+
+      if (pinned.length > 0 && others.length > 0) {
+        // Pinned Section
+        const pinHeader = document.createElement('div');
+        pinHeader.className = 'keep-section-header';
+        pinHeader.innerHTML = `<span>📌 PINNED</span><span class="keep-badge">${pinned.length}</span>`;
+        dom.bookmarksGrid.appendChild(pinHeader);
+
+        const pinGrid = document.createElement('div');
+        pinGrid.className = 'keep-subgrid';
+        pinned.forEach(bm => pinGrid.appendChild(createBookmarkCard(bm)));
+        dom.bookmarksGrid.appendChild(pinGrid);
+
+        // Others Section
+        const othHeader = document.createElement('div');
+        othHeader.className = 'keep-section-header';
+        othHeader.innerHTML = `<span>OTHERS</span><span class="keep-badge">${others.length}</span>`;
+        dom.bookmarksGrid.appendChild(othHeader);
+
+        const othGrid = document.createElement('div');
+        othGrid.className = 'keep-subgrid';
+        others.forEach(bm => othGrid.appendChild(createBookmarkCard(bm)));
+        dom.bookmarksGrid.appendChild(othGrid);
+
+        if (dom.bookmarksSentinel) dom.bookmarksSentinel.classList.add('hidden');
+        return;
+      }
+    }
+
+    // 3. STANDARD BATCH RENDERING (Infinite Sentinel)
+    currentFilteredList = list;
+    currentlyRenderedCount = 0;
     renderNextBookmarkBatch();
     setupSentinelObserver();
+  }
+
+  function createBookmarkCard(bm, isBoard = false) {
+    const domain = getDomain(bm.url);
+    const faviconUrl = getFaviconUrl(bm.url);
+    const initial = (bm.title || domain || 'B').charAt(0).toUpperCase();
+
+    const card = document.createElement('div');
+    card.className = `bookmark-card ${isBoard ? 'lumilist-card' : 'keep-card'}`;
+    card.setAttribute('data-id', bm.id);
+    card.setAttribute('draggable', 'true');
+
+    const tagsArray = (bm.tags || '')
+      .split(',')
+      .map(t => t.trim())
+      .filter(t => t && t !== 'browser-sync' && t !== 'imported' && t !== 'board');
+    
+    const tagsHtml = tagsArray.slice(0, 2).map(tag => 
+      `<span class="bm-chip">#${escapeHtml(tag)}</span>`
+    ).join('');
+
+    if (state.currentLayout === 'compact') {
+      card.innerHTML = `
+        <div class="bm-favicon-wrap">
+          <img class="bm-favicon" src="${faviconUrl}" alt="${escapeHtml(bm.title)}" loading="lazy">
+          <div class="bm-fallback-initial" style="display:none;">${initial}</div>
+        </div>
+        <div class="bm-info">
+          <div class="bm-title" title="${escapeHtml(bm.title)}">${escapeHtml(bm.title)}</div>
+        </div>
+      `;
+    } else if (state.currentLayout === 'list') {
+      card.innerHTML = `
+        <div class="bm-favicon-wrap">
+          <img class="bm-favicon" src="${faviconUrl}" alt="${escapeHtml(bm.title)}" loading="lazy">
+          <div class="bm-fallback-initial" style="display:none;">${initial}</div>
+        </div>
+        <div class="bm-info">
+          <div class="bm-title" title="${escapeHtml(bm.title)}">${escapeHtml(bm.title)}</div>
+          <div class="bm-domain" title="${escapeHtml(bm.url)}">${escapeHtml(domain)}</div>
+        </div>
+        <div class="bm-card-actions" style="opacity: 1;">
+          <button class="bm-action-btn btn-star ${bm.favorite ? 'star-active' : ''}" title="${bm.favorite ? 'Unpin' : 'Pin to Top'}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="${bm.favorite ? '#f59e0b' : 'none'}" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </button>
+          <button class="bm-action-btn btn-edit" title="Edit">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </button>
+          <button class="bm-action-btn btn-delete" title="Delete">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+        </div>
+      `;
+    } else {
+      // Google Keep & Lumilist Card Structure
+      card.innerHTML = `
+        <div class="bm-card-top">
+          <div class="bm-card-source">
+            <div class="bm-favicon-wrap">
+              <img class="bm-favicon" src="${faviconUrl}" alt="${escapeHtml(bm.title)}" loading="lazy">
+              <div class="bm-fallback-initial" style="display:none;">${initial}</div>
+            </div>
+            <span class="bm-domain" title="${escapeHtml(bm.url)}">${escapeHtml(domain)}</span>
+          </div>
+          <button class="bm-pin-btn ${bm.favorite ? 'pinned' : ''}" title="${bm.favorite ? 'Unpin' : 'Pin to Top'}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="${bm.favorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+              <path d="M12 17v5M9 2h6l-1 5 4 4v2H6v-2l4-4-1-5z"/>
+            </svg>
+          </button>
+        </div>
+        <div class="bm-card-body">
+          <div class="bm-title" title="${escapeHtml(bm.title)}">${escapeHtml(bm.title)}</div>
+          <div class="bm-chips-row">
+            <span class="bm-chip cat-chip" title="Board / Category">${escapeHtml(bm.category || 'General')}</span>
+            ${tagsHtml}
+          </div>
+        </div>
+        <div class="bm-card-actions">
+          <button class="bm-action-btn btn-star ${bm.favorite ? 'star-active' : ''}" title="${bm.favorite ? 'Unpin' : 'Pin to Top'}">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="${bm.favorite ? '#f59e0b' : 'none'}" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          </button>
+          <button class="bm-action-btn btn-copy" title="Copy URL">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+          <button class="bm-action-btn btn-edit" title="Edit Bookmark">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+          </button>
+          <button class="bm-action-btn btn-delete" title="Delete Bookmark">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+          </button>
+          <button class="bm-action-btn btn-open" title="Open in New Tab">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </button>
+        </div>
+      `;
+    }
+
+    // Google Keep & Lumilist Drag Movability
+    card.addEventListener('dragstart', (e) => {
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', bm.id);
+    });
+
+    card.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      card.classList.add('drag-over');
+    });
+
+    card.addEventListener('dragleave', () => {
+      card.classList.remove('drag-over');
+    });
+
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dragging');
+      card.classList.remove('drag-over');
+    });
+
+    card.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      card.classList.remove('drag-over');
+      const draggedId = e.dataTransfer.getData('text/plain');
+      const targetId = bm.id;
+
+      if (draggedId && draggedId !== targetId) {
+        const fromIndex = state.bookmarks.findIndex(b => b.id === draggedId);
+        const toIndex = state.bookmarks.findIndex(b => b.id === targetId);
+
+        if (fromIndex !== -1 && toIndex !== -1) {
+          const [moved] = state.bookmarks.splice(fromIndex, 1);
+          moved.page = state.activePage || 'Personal';
+          // In board view, adopt the target column's category
+          if (isBoard) {
+            moved.category = bm.category || 'General';
+          } else if (state.currentLayout === 'cards') {
+            // Adopt the target card's pinned status (moving between PINNED and OTHERS)
+            moved.favorite = bm.favorite;
+          }
+          state.bookmarks.splice(toIndex, 0, moved);
+          storage.set({ bookmarks: state.bookmarks });
+          renderPagesBar();
+          renderCategoryTabs();
+          renderBookmarks();
+          showToast('Card moved');
+        }
+      }
+    });
+
+    // Click card to open website
+    card.addEventListener('click', (e) => {
+      if (e.target.closest('.bm-action-btn') || e.target.closest('.bm-pin-btn')) return;
+      openBookmark(bm);
+    });
+
+    // Keep Pin button
+    const pinBtn = card.querySelector('.bm-pin-btn');
+    if (pinBtn) {
+      pinBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleFavorite(bm.id);
+      });
+    }
+
+    // Star button
+    const starBtn = card.querySelector('.btn-star');
+    if (starBtn) {
+      starBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        toggleFavorite(bm.id);
+      });
+    }
+
+    // Copy URL button
+    const copyBtn = card.querySelector('.btn-copy');
+    if (copyBtn) {
+      copyBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(bm.url).then(() => {
+          showToast('Copied URL to clipboard');
+        });
+      });
+    }
+
+    // Edit button
+    const editBtn = card.querySelector('.btn-edit');
+    if (editBtn) {
+      editBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openEditModal(bm);
+      });
+    }
+
+    // Delete button
+    const deleteBtn = card.querySelector('.btn-delete');
+    if (deleteBtn) {
+      deleteBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        deleteBookmark(bm.id);
+      });
+    }
+
+    // Open button
+    const openBtn = card.querySelector('.btn-open');
+    if (openBtn) {
+      openBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openBookmark(bm);
+      });
+    }
+
+    return card;
   }
 
   function renderNextBookmarkBatch() {
@@ -1271,108 +1539,7 @@
     const fragment = document.createDocumentFragment();
 
     batch.forEach(bm => {
-      const domain = getDomain(bm.url);
-      const faviconUrl = getFaviconUrl(bm.url);
-      const initial = (bm.title || domain || 'B').charAt(0).toUpperCase();
-
-      const card = document.createElement('div');
-      card.className = 'bookmark-card';
-      card.setAttribute('data-id', bm.id);
-
-      card.innerHTML = `
-        <div class="bm-favicon-wrap">
-          <img class="bm-favicon" src="${faviconUrl}" alt="${escapeHtml(bm.title)}" loading="lazy">
-          <div class="bm-fallback-initial" style="display:none;">${initial}</div>
-        </div>
-        <div class="bm-info">
-          <div class="bm-title" title="${escapeHtml(bm.title)}">${escapeHtml(bm.title)}</div>
-          <div class="bm-domain" title="${escapeHtml(bm.url)}">${escapeHtml(domain)}</div>
-        </div>
-        <div class="bm-actions">
-          <button class="bm-action-btn btn-star ${bm.favorite ? 'star-active' : ''}" title="${bm.favorite ? 'Unfavorite' : 'Add to Favorites'}">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="${bm.favorite ? '#f59e0b' : 'none'}" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-          </button>
-          <button class="bm-action-btn btn-edit" title="Edit Bookmark">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-          </button>
-          <button class="bm-action-btn btn-delete" title="Delete Bookmark">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-          </button>
-        </div>
-      `;
-
-      card.setAttribute('draggable', 'true');
-
-      // Drag and Drop (Visual Boards reordering)
-      card.addEventListener('dragstart', (e) => {
-        card.classList.add('dragging');
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/plain', bm.id);
-      });
-
-      card.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        card.classList.add('drag-over');
-      });
-
-      card.addEventListener('dragleave', () => {
-        card.classList.remove('drag-over');
-      });
-
-      card.addEventListener('dragend', () => {
-        card.classList.remove('dragging');
-        card.classList.remove('drag-over');
-      });
-
-      card.addEventListener('drop', (e) => {
-        e.preventDefault();
-        card.classList.remove('drag-over');
-        const draggedId = e.dataTransfer.getData('text/plain');
-        const targetId = bm.id;
-
-        if (draggedId && draggedId !== targetId) {
-          const fromIndex = state.bookmarks.findIndex(b => b.id === draggedId);
-          const toIndex = state.bookmarks.findIndex(b => b.id === targetId);
-
-          if (fromIndex !== -1 && toIndex !== -1) {
-            const [moved] = state.bookmarks.splice(fromIndex, 1);
-            moved.page = state.activePage || 'Personal';
-            state.bookmarks.splice(toIndex, 0, moved);
-            storage.set({ bookmarks: state.bookmarks });
-            renderPagesBar();
-            renderCategoryTabs();
-            renderBookmarks();
-            showToast('Board layout updated');
-          }
-        }
-      });
-
-      // Click card to open website
-      card.addEventListener('click', (e) => {
-        if (e.target.closest('.bm-action-btn')) return;
-        openBookmark(bm);
-      });
-
-      // Action: Star Favorite
-      card.querySelector('.btn-star').addEventListener('click', (e) => {
-        e.stopPropagation();
-        toggleFavorite(bm.id);
-      });
-
-      // Action: Edit
-      card.querySelector('.btn-edit').addEventListener('click', (e) => {
-        e.stopPropagation();
-        openEditModal(bm);
-      });
-
-      // Action: Delete
-      card.querySelector('.btn-delete').addEventListener('click', (e) => {
-        e.stopPropagation();
-        deleteBookmark(bm.id);
-      });
-
-      fragment.appendChild(card);
+      fragment.appendChild(createBookmarkCard(bm, false));
     });
 
     dom.bookmarksGrid.appendChild(fragment);
@@ -1389,6 +1556,121 @@
         dom.bookmarksSentinel.classList.add('hidden');
       }
     }
+  }
+
+  // =========================================================================
+  // LUMILIST BOARD RENDERER (Kanban Columns with Cross-Column Dragging)
+  // =========================================================================
+  function renderLumilistBoard(list) {
+    if (!dom.lumilistBoard) return;
+    dom.lumilistBoard.innerHTML = '';
+
+    const categories = getCategories();
+    // Also include any categories present in current list
+    list.forEach(bm => {
+      const c = bm.category || 'General';
+      if (!categories.includes(c)) categories.push(c);
+    });
+
+    categories.forEach(cat => {
+      const colBookmarks = list.filter(b => (b.category || 'General') === cat);
+      const col = document.createElement('div');
+      col.className = 'lumilist-col';
+      col.setAttribute('data-board', cat);
+
+      col.innerHTML = `
+        <div class="lumilist-col-header">
+          <div class="lumilist-col-title">
+            <span class="lumilist-col-dot"></span>
+            <span class="lumilist-col-name">${escapeHtml(cat)}</span>
+            <span class="lumilist-col-count">${colBookmarks.length}</span>
+          </div>
+          <button type="button" class="lumilist-add-btn" title="Add Bookmark to ${escapeHtml(cat)}">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          </button>
+        </div>
+        <div class="lumilist-col-body" data-drop-board="${escapeHtml(cat)}"></div>
+        <div class="lumilist-col-footer">
+          <button type="button" class="lumilist-quick-add-btn">+ Add item</button>
+        </div>
+      `;
+
+      const body = col.querySelector('.lumilist-col-body');
+      colBookmarks.forEach(bm => {
+        body.appendChild(createBookmarkCard(bm, true));
+      });
+
+      // Drop zone for cross-board dragging
+      body.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        body.classList.add('drag-over-col');
+      });
+
+      body.addEventListener('dragleave', (e) => {
+        if (!body.contains(e.relatedTarget)) {
+          body.classList.remove('drag-over-col');
+        }
+      });
+
+      body.addEventListener('drop', (e) => {
+        e.preventDefault();
+        body.classList.remove('drag-over-col');
+        const draggedId = e.dataTransfer.getData('text/plain');
+        if (draggedId) {
+          const item = state.bookmarks.find(b => b.id === draggedId);
+          if (item) {
+            item.category = cat;
+            storage.set({ bookmarks: state.bookmarks });
+            renderCategoryTabs();
+            renderBookmarks();
+            showToast(`Moved to ${cat}`);
+          }
+        }
+      });
+
+      // Quick add buttons on column
+      col.querySelectorAll('.lumilist-add-btn, .lumilist-quick-add-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          openAddModalWithCategory(cat);
+        });
+      });
+
+      dom.lumilistBoard.appendChild(col);
+    });
+
+    // Add "+ Add Board" Card at the end of the board
+    const addCol = document.createElement('div');
+    addCol.className = 'lumilist-add-board-col';
+    addCol.innerHTML = `
+      <div class="add-board-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      </div>
+      <strong>+ Add Board</strong>
+      <span>Create new Lumilist list</span>
+    `;
+    addCol.addEventListener('click', handleAddNewBoard);
+    dom.lumilistBoard.appendChild(addCol);
+  }
+
+  function openAddModalWithCategory(cat) {
+    if (dom.bmId) dom.bmId.value = '';
+    if (dom.bmUrl) dom.bmUrl.value = '';
+    if (dom.bmTitle) dom.bmTitle.value = '';
+    if (dom.bmCategory) dom.bmCategory.value = cat;
+    if (dom.bmTags) dom.bmTags.value = '';
+    if (dom.bmFavorite) dom.bmFavorite.checked = false;
+    if (dom.modalTitle) dom.modalTitle.textContent = `Add Bookmark to ${cat}`;
+    if (dom.bookmarkModal) dom.bookmarkModal.classList.remove('hidden');
+    if (dom.bmUrl) dom.bmUrl.focus();
+  }
+
+  function handleAddNewBoard() {
+    const name = window.prompt('Enter new Board / List name (e.g. Reading List, Inspiration, Dev):');
+    if (!name || !name.trim()) return;
+    const cleanName = name.trim();
+    openAddModalWithCategory(cleanName);
+    showToast(`New board "${cleanName}" ready!`);
   }
 
   function setupSentinelObserver() {
@@ -2210,6 +2492,7 @@
 
     // Layout Switchers
     dom.layoutCards.addEventListener('click', () => applyLayout('cards'));
+    if (dom.layoutBoard) dom.layoutBoard.addEventListener('click', () => applyLayout('board'));
     dom.layoutCompact.addEventListener('click', () => applyLayout('compact'));
     dom.layoutList.addEventListener('click', () => applyLayout('list'));
 

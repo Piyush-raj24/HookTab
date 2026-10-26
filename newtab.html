@@ -65,8 +65,11 @@
       <div class="nav-right">
         <!-- Layout Switcher -->
         <div class="layout-toggle-group">
-          <button id="layout-cards" class="icon-toggle active" title="Card Grid View">
+          <button id="layout-cards" class="icon-toggle active" title="Google Keep Grid View">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+          </button>
+          <button id="layout-board" class="icon-toggle" title="Lumilist Board View (Kanban Columns)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="13" rx="1"/><rect x="17" y="3" width="5" height="16" rx="1"/></svg>
           </button>
           <button id="layout-compact" class="icon-toggle" title="Compact 100+ Matrix View">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="4" height="4"/><rect x="10" y="3" width="4" height="4"/><rect x="17" y="3" width="4" height="4"/><rect x="3" y="10" width="4" height="4"/><rect x="10" y="10" width="4" height="4"/><rect x="17" y="10" width="4" height="4"/><rect x="3" y="17" width="4" height="4"/><rect x="10" y="17" width="4" height="4"/><rect x="17" y="17" width="4" height="4"/></svg>
@@ -228,9 +231,14 @@
           </div>
         </div>
 
-        <!-- Bookmarks Grid Container -->
+        <!-- Bookmarks Grid Container (Google Keep Cards / Compact / List) -->
         <div id="bookmarks-grid" class="bookmarks-grid">
           <!-- Dynamic Bookmark Cards Rendered via JS in Batches -->
+        </div>
+
+        <!-- Lumilist Board Container (Kanban Columns) -->
+        <div id="lumilist-board" class="lumilist-board hidden">
+          <!-- Dynamic Lumilist Columns Rendered via JS -->
         </div>
 
         <!-- Infinite Scroll Sentinel & Load More Indicator -->

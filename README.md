@@ -47,7 +47,7 @@
 You **do not need to pay the $5 Google Chrome Web Store developer fee** to make HookTab public and freely installable by anyone worldwide! 
 
 ### How Users Install from GitHub Releases:
-1. Go to your repo's **Releases** page (e.g. `https://github.com/your-username/hooktab/releases`).
+1. Go to your repo's **Releases** page (e.g. `https://github.com/Piyush-raj24/-HookTab/releases`).
 2. Download the attached **`HookTab-v1.0.0.zip`**.
 3. Extract/unzip the file on your computer.
 4. In Brave or Chrome, navigate to `brave://extensions` (or `chrome://extensions`).
@@ -74,7 +74,7 @@ This produces `dist/HookTab-v1.0.0.zip` ready to be attached to your GitHub Rele
 ## 🤝 Contributing & Bug Reports
 Found a bug or have a suggestion?
 - Click the **"Report a Bug / Give Feedback"** button inside the extension's Settings Drawer.
-- Or open an issue directly on the [GitHub Issue Tracker](https://github.com/your-username/hooktab/issues).
+- Or open an issue directly on the [GitHub Issue Tracker](https://github.com/Piyush-raj24/-HookTab/issues).
 
 ---
 

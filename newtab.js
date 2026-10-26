@@ -34,6 +34,10 @@
     weatherCache: null,
     quickAccessMode: 'frequent', // 'frequent' | 'recent'
     recentSites: [],
+    customTopSites: [], // User custom added sites
+    topSitesHidden: false, // Whether top sites row is hidden
+    topSitesShowMore: false, // false = 1 row (7 items), true = 2 rows
+    topSitesPage: 0, // 0 = page 1, 1 = page 2
     customBoards: ['Other bookmarks', 'kk', 'kl']
   };
 
@@ -106,12 +110,28 @@
     modeWeb: document.getElementById('mode-web'),
     modeBookmarks: document.getElementById('mode-bookmarks'),
 
-    // Quick Access (Most Used & Recent)
+    // Quick Access / Brave Top Sites
     quickAccessBar: document.getElementById('quick-access-bar'),
-    qaTabFrequent: document.getElementById('qa-tab-frequent'),
-    qaTabRecent: document.getElementById('qa-tab-recent'),
-    qaIndicatorLabel: document.getElementById('qa-indicator-label'),
     quickAccessGrid: document.getElementById('quick-access-grid'),
+    btnTopSitesMenu: document.getElementById('btn-top-sites-menu'),
+    topSitesMenuPopover: document.getElementById('top-sites-menu-popover'),
+    menuAddSite: document.getElementById('menu-add-site'),
+    menuToggleMore: document.getElementById('menu-toggle-more'),
+    labelToggleMore: document.getElementById('label-toggle-more'),
+    menuToggleFrequent: document.getElementById('menu-toggle-frequent'),
+    labelToggleFrequent: document.getElementById('label-toggle-frequent'),
+    menuHideSites: document.getElementById('menu-hide-sites'),
+    topSitesPagination: document.getElementById('top-sites-pagination'),
+    btnToggleTopSitesVis: document.getElementById('btn-toggle-top-sites-vis'),
+    labelTopSitesVis: document.getElementById('label-top-sites-vis'),
+
+    // Add Top Site Modal
+    topSiteModal: document.getElementById('top-site-modal'),
+    topSiteForm: document.getElementById('top-site-form'),
+    topSiteName: document.getElementById('top-site-name'),
+    topSiteUrl: document.getElementById('top-site-url'),
+    btnCloseTopSiteModal: document.getElementById('btn-close-top-site-modal'),
+    btnCancelTopSiteModal: document.getElementById('btn-cancel-top-site-modal'),
 
     // Privacy Mode (Screen Share Blur)
     btnPrivacyToggle: document.getElementById('btn-privacy-toggle'),
@@ -572,7 +592,10 @@
       'weatherCache',
       'quickAccessMode',
       'recentSites',
-      'customBoards'
+      'customBoards',
+      'customTopSites',
+      'topSitesHidden',
+      'topSitesShowMore'
     ];
 
     storage.get(keys, function (data) {
@@ -650,6 +673,17 @@
         state.customBoards = data.customBoards;
       } else {
         state.customBoards = ['Other bookmarks', 'kk', 'kl'];
+      }
+      if (Array.isArray(data.customTopSites)) {
+        state.customTopSites = data.customTopSites;
+      } else {
+        state.customTopSites = [];
+      }
+      if (typeof data.topSitesHidden === 'boolean') {
+        state.topSitesHidden = data.topSitesHidden;
+      }
+      if (typeof data.topSitesShowMore === 'boolean') {
+        state.topSitesShowMore = data.topSitesShowMore;
       }
 
       callback();
@@ -1580,30 +1614,141 @@
   function initQuickAccess() {
     if (!dom.quickAccessBar) return;
 
-    if (dom.qaTabFrequent) {
-      dom.qaTabFrequent.addEventListener('click', () => {
-        state.quickAccessMode = 'frequent';
-        storage.set({ quickAccessMode: 'frequent' });
-        dom.qaTabFrequent.classList.add('active');
-        if (dom.qaTabRecent) dom.qaTabRecent.classList.remove('active');
-        if (dom.qaIndicatorLabel) dom.qaIndicatorLabel.textContent = 'Top Sites • Most Visited';
+    // 1. Toggle 3-Dots Menu Popover
+    if (dom.btnTopSitesMenu && dom.topSitesMenuPopover) {
+      dom.btnTopSitesMenu.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const isOpen = !dom.topSitesMenuPopover.classList.contains('hidden');
+        if (isOpen) {
+          dom.topSitesMenuPopover.classList.add('hidden');
+          dom.btnTopSitesMenu.classList.remove('active');
+        } else {
+          dom.topSitesMenuPopover.classList.remove('hidden');
+          dom.btnTopSitesMenu.classList.add('active');
+        }
+      });
+    }
+
+    // Close 3-Dots Menu Popover when clicking outside
+    document.addEventListener('click', (e) => {
+      if (dom.topSitesMenuPopover && !e.target.closest('#top-sites-menu-popover') && !e.target.closest('#btn-top-sites-menu')) {
+        dom.topSitesMenuPopover.classList.add('hidden');
+        if (dom.btnTopSitesMenu) dom.btnTopSitesMenu.classList.remove('active');
+      }
+    });
+
+    // 2. Menu Item: Add site
+    if (dom.menuAddSite) {
+      dom.menuAddSite.addEventListener('click', () => {
+        if (dom.topSitesMenuPopover) dom.topSitesMenuPopover.classList.add('hidden');
+        if (dom.btnTopSitesMenu) dom.btnTopSitesMenu.classList.remove('active');
+        openTopSiteModal();
+      });
+    }
+
+    // Modal Handlers: Add Top Site
+    if (dom.topSiteForm) {
+      dom.topSiteForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = dom.topSiteName ? dom.topSiteName.value.trim() : '';
+        let url = dom.topSiteUrl ? dom.topSiteUrl.value.trim() : '';
+        if (!name || !url) return;
+
+        if (!/^https?:\/\//i.test(url)) {
+          url = 'https://' + url;
+        }
+
+        if (!Array.isArray(state.customTopSites)) state.customTopSites = [];
+        state.customTopSites.unshift({
+          id: 'custom_' + Date.now(),
+          title: name,
+          url: url
+        });
+
+        storage.set({ customTopSites: state.customTopSites });
+        closeTopSiteModal();
+        renderQuickAccess();
+        showToast(`Added "${name}" to Top Sites`);
+      });
+    }
+
+    if (dom.btnCloseTopSiteModal) {
+      dom.btnCloseTopSiteModal.addEventListener('click', closeTopSiteModal);
+    }
+    if (dom.btnCancelTopSiteModal) {
+      dom.btnCancelTopSiteModal.addEventListener('click', closeTopSiteModal);
+    }
+
+    // 3. Menu Item: Show more items / Show fewer items (1 row vs 2 rows)
+    if (dom.menuToggleMore) {
+      dom.menuToggleMore.addEventListener('click', () => {
+        state.topSitesShowMore = !state.topSitesShowMore;
+        storage.set({ topSitesShowMore: state.topSitesShowMore });
+        if (dom.topSitesMenuPopover) dom.topSitesMenuPopover.classList.add('hidden');
+        if (dom.btnTopSitesMenu) dom.btnTopSitesMenu.classList.remove('active');
         renderQuickAccess();
       });
     }
 
-    if (dom.qaTabRecent) {
-      dom.qaTabRecent.addEventListener('click', () => {
-        state.quickAccessMode = 'recent';
-        storage.set({ quickAccessMode: 'recent' });
-        dom.qaTabRecent.classList.add('active');
-        if (dom.qaTabFrequent) dom.qaTabFrequent.classList.remove('active');
-        if (dom.qaIndicatorLabel) dom.qaIndicatorLabel.textContent = 'Recently Visited';
+    // 4. Menu Item: Show frequently visited / Show recently visited
+    if (dom.menuToggleFrequent) {
+      dom.menuToggleFrequent.addEventListener('click', () => {
+        state.quickAccessMode = state.quickAccessMode === 'frequent' ? 'recent' : 'frequent';
+        storage.set({ quickAccessMode: state.quickAccessMode });
+        if (dom.topSitesMenuPopover) dom.topSitesMenuPopover.classList.add('hidden');
+        if (dom.btnTopSitesMenu) dom.btnTopSitesMenu.classList.remove('active');
         renderQuickAccess();
+        showToast(state.quickAccessMode === 'frequent' ? 'Showing frequently visited sites' : 'Showing recently visited sites');
       });
     }
 
+    // 5. Menu Item: Hide top sites
+    if (dom.menuHideSites) {
+      dom.menuHideSites.addEventListener('click', () => {
+        state.topSitesHidden = true;
+        storage.set({ topSitesHidden: true });
+        if (dom.topSitesMenuPopover) dom.topSitesMenuPopover.classList.add('hidden');
+        if (dom.btnTopSitesMenu) dom.btnTopSitesMenu.classList.remove('active');
+        renderQuickAccess();
+        showToast('Top sites hidden. Re-enable anytime from Settings (⚙️)');
+      });
+    }
+
+    // 6. Settings Drawer: Toggle Top Sites visibility
+    if (dom.btnToggleTopSitesVis) {
+      dom.btnToggleTopSitesVis.addEventListener('click', () => {
+        state.topSitesHidden = !state.topSitesHidden;
+        storage.set({ topSitesHidden: state.topSitesHidden });
+        renderQuickAccess();
+        showToast(state.topSitesHidden ? 'Top sites hidden' : 'Top sites visible');
+      });
+    }
+
+    // 7. Pagination Dots Handlers
+    if (dom.topSitesPagination) {
+      dom.topSitesPagination.addEventListener('click', (e) => {
+        const dot = e.target.closest('.top-sites-dot');
+        if (!dot) return;
+        const page = parseInt(dot.dataset.page, 10);
+        if (!isNaN(page)) {
+          state.topSitesPage = page;
+          renderQuickAccess();
+        }
+      });
+    }
+
+    // 8. Grid Click Handlers (Opening and Removing sites)
     if (dom.quickAccessGrid) {
       dom.quickAccessGrid.addEventListener('click', (e) => {
+        const removeBtn = e.target.closest('.qa-remove-btn');
+        if (removeBtn) {
+          e.preventDefault();
+          e.stopPropagation();
+          const targetUrl = removeBtn.dataset.url;
+          removeTopSite(targetUrl);
+          return;
+        }
+
         const item = e.target.closest('.qa-item');
         if (!item) return;
         const url = item.dataset.url;
@@ -1611,80 +1756,157 @@
 
         const title = item.getAttribute('title') || url;
         trackRecentSite(url, title);
-
-        if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
-          e.preventDefault();
-          chrome.tabs.create({ url: url });
-        }
       });
-    }
-
-    // Set initial tab styling based on saved quickAccessMode
-    if (state.quickAccessMode === 'recent') {
-      if (dom.qaTabRecent) dom.qaTabRecent.classList.add('active');
-      if (dom.qaTabFrequent) dom.qaTabFrequent.classList.remove('active');
-      if (dom.qaIndicatorLabel) dom.qaIndicatorLabel.textContent = 'Recently Visited';
-    } else {
-      if (dom.qaTabFrequent) dom.qaTabFrequent.classList.add('active');
-      if (dom.qaTabRecent) dom.qaTabRecent.classList.remove('active');
-      if (dom.qaIndicatorLabel) dom.qaIndicatorLabel.textContent = 'Top Sites • Most Visited';
     }
 
     renderQuickAccess();
   }
 
+  function openTopSiteModal() {
+    if (!dom.topSiteModal) return;
+    if (dom.topSiteName) dom.topSiteName.value = '';
+    if (dom.topSiteUrl) dom.topSiteUrl.value = '';
+    dom.topSiteModal.classList.remove('hidden');
+    if (dom.topSiteName) dom.topSiteName.focus();
+  }
+
+  function closeTopSiteModal() {
+    if (dom.topSiteModal) dom.topSiteModal.classList.add('hidden');
+  }
+
+  function removeTopSite(url) {
+    if (!url) return;
+    if (Array.isArray(state.customTopSites)) {
+      state.customTopSites = state.customTopSites.filter(s => s.url !== url);
+      storage.set({ customTopSites: state.customTopSites });
+    }
+    if (Array.isArray(state.recentSites)) {
+      state.recentSites = state.recentSites.filter(s => s.url !== url);
+      storage.set({ recentSites: state.recentSites });
+    }
+    renderQuickAccess();
+    showToast('Removed site');
+  }
+
   function renderQuickAccess() {
-    if (!dom.quickAccessGrid) return;
+    if (!dom.quickAccessBar || !dom.quickAccessGrid) return;
 
+    // Apply visibility
+    if (state.topSitesHidden) {
+      dom.quickAccessBar.classList.add('hidden');
+      if (dom.labelTopSitesVis) dom.labelTopSitesVis.textContent = 'Show Top Sites';
+      return;
+    } else {
+      dom.quickAccessBar.classList.remove('hidden');
+      if (dom.labelTopSitesVis) dom.labelTopSitesVis.textContent = 'Hide Top Sites';
+    }
+
+    // Update Popover Menu Labels
+    if (dom.labelToggleMore) {
+      dom.labelToggleMore.textContent = state.topSitesShowMore ? 'Show fewer items' : 'Show more items';
+    }
+    if (dom.labelToggleFrequent) {
+      dom.labelToggleFrequent.textContent = state.quickAccessMode === 'frequent' 
+        ? 'Show recently visited' 
+        : 'Show frequently visited';
+    }
+
+    // Toggle 2-row expanded class on grid
+    dom.quickAccessGrid.classList.toggle('expanded', !!state.topSitesShowMore);
+
+    // Fetch site data based on mode
     if (state.quickAccessMode === 'recent') {
-      // Recent mode
-      let recents = Array.isArray(state.recentSites) && state.recentSites.length > 0 
-        ? state.recentSites.slice(0, 10) 
-        : [];
-
+      let recents = Array.isArray(state.recentSites) ? state.recentSites.slice() : [];
       if (recents.length === 0 && state.bookmarks.length > 0) {
-        // Fallback to recent bookmarks
-        recents = state.bookmarks.slice().reverse().slice(0, 8).map(b => ({
+        recents = state.bookmarks.slice().reverse().slice(0, 14).map(b => ({
           url: b.url,
-          title: b.title,
-          isBookmark: true
+          title: b.title
         }));
       }
-
-      if (recents.length === 0) {
-        dom.quickAccessGrid.innerHTML = `
-          <div style="grid-column: 1 / -1; text-align: center; padding: 12px; font-size: 0.76rem; color: var(--text-muted);">
-            No recently opened websites yet. Click any bookmark to populate this list.
-          </div>
-        `;
-        return;
-      }
-
-      dom.quickAccessGrid.innerHTML = recents.map(site => renderQuickAccessTile(site, false)).join('');
+      buildAndRenderTopSites(recents);
     } else {
-      // Most Used / Frequent mode
+      // Frequent / Most Visited
       if (typeof chrome !== 'undefined' && chrome.topSites && chrome.topSites.get) {
         chrome.topSites.get((topSites) => {
-          let sites = topSites && topSites.length > 0 ? topSites.slice(0, 10) : [];
+          let sites = topSites && topSites.length > 0 ? topSites.slice(0, 14) : [];
           if (sites.length === 0) {
             sites = getFallbackFrequentSites();
           }
-          if (dom.quickAccessGrid) {
-            dom.quickAccessGrid.innerHTML = sites.map(s => renderQuickAccessTile(s, true)).join('');
-          }
+          buildAndRenderTopSites(sites);
         });
       } else {
         const sites = getFallbackFrequentSites();
-        dom.quickAccessGrid.innerHTML = sites.map(s => renderQuickAccessTile(s, true)).join('');
+        buildAndRenderTopSites(sites);
       }
     }
+  }
+
+  function buildAndRenderTopSites(autoSites) {
+    // Merge customTopSites first, then autoSites (deduplicating URLs)
+    const combined = [];
+    const seenUrls = new Set();
+
+    (state.customTopSites || []).forEach(site => {
+      if (site.url && !seenUrls.has(site.url)) {
+        seenUrls.add(site.url);
+        combined.push({ ...site, isCustom: true });
+      }
+    });
+
+    (autoSites || []).forEach(site => {
+      if (site.url && !seenUrls.has(site.url)) {
+        seenUrls.add(site.url);
+        combined.push({ ...site, isCustom: false });
+      }
+    });
+
+    if (combined.length === 0) {
+      dom.quickAccessGrid.innerHTML = `
+        <div style="text-align: center; padding: 12px; font-size: 0.78rem; color: rgba(255,255,255,0.7); text-shadow: 0 1px 2px rgba(0,0,0,0.5);">
+          No top sites yet. Click the three dots (•••) to Add a site.
+        </div>
+      `;
+      if (dom.topSitesPagination) dom.topSitesPagination.classList.add('hidden');
+      return;
+    }
+
+    const PAGE_SIZE = 7;
+    let displayList = [];
+
+    if (state.topSitesShowMore) {
+      // 2-row expanded view (up to 14 items)
+      displayList = combined.slice(0, 14);
+      if (dom.topSitesPagination) dom.topSitesPagination.classList.add('hidden');
+    } else {
+      // 1-row view with pagination
+      if (combined.length > PAGE_SIZE) {
+        if (dom.topSitesPagination) {
+          dom.topSitesPagination.classList.remove('hidden');
+          const dots = dom.topSitesPagination.querySelectorAll('.top-sites-dot');
+          dots.forEach((dot, idx) => {
+            dot.classList.toggle('active', idx === state.topSitesPage);
+          });
+        }
+        const start = (state.topSitesPage || 0) * PAGE_SIZE;
+        displayList = combined.slice(start, start + PAGE_SIZE);
+        if (displayList.length === 0) {
+          state.topSitesPage = 0;
+          displayList = combined.slice(0, PAGE_SIZE);
+        }
+      } else {
+        if (dom.topSitesPagination) dom.topSitesPagination.classList.add('hidden');
+        displayList = combined.slice(0, PAGE_SIZE);
+      }
+    }
+
+    dom.quickAccessGrid.innerHTML = displayList.map(site => renderQuickAccessTile(site)).join('');
   }
 
   function getFallbackFrequentSites() {
     const visitedBookmarks = state.bookmarks
       .filter(b => (b.visits || 0) > 0)
       .sort((a, b) => (b.visits || 0) - (a.visits || 0))
-      .slice(0, 10);
+      .slice(0, 14);
 
     if (visitedBookmarks.length > 0) {
       return visitedBookmarks.map(b => ({
@@ -1696,23 +1918,21 @@
     return DEFAULT_TOP_SITES;
   }
 
-  function renderQuickAccessTile(item, isFrequent) {
+  function renderQuickAccessTile(item) {
     const url = item.url || '#';
     const rawTitle = item.title || getDomain(url) || 'Site';
-    const cleanTitle = rawTitle.length > 14 ? rawTitle.slice(0, 13) + '…' : rawTitle;
-    const initial = (cleanTitle.charAt(0) || 'W').toUpperCase();
+    const initial = (rawTitle.charAt(0) || 'W').toUpperCase();
     const faviconUrl = getFaviconUrl(url);
-    const badgeText = isFrequent && item.visits ? `${item.visits}x` : (isFrequent ? 'Top' : 'Recent');
 
     return `
-      <a href="${escapeHtml(url)}" class="qa-item" data-url="${escapeHtml(url)}" title="${escapeHtml(item.title || url)}" target="_blank" rel="noopener noreferrer">
-        <div class="qa-icon-wrap">
-          <img class="qa-icon" src="${escapeHtml(faviconUrl)}" alt="${escapeHtml(initial)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+      <div class="qa-item" data-url="${escapeHtml(url)}" title="${escapeHtml(item.title || url)}">
+        <button type="button" class="qa-remove-btn" data-url="${escapeHtml(url)}" title="Remove ${escapeHtml(rawTitle)}">&times;</button>
+        <a href="${escapeHtml(url)}" class="qa-squircle" target="_blank" rel="noopener noreferrer">
+          <img class="qa-icon" src="${escapeHtml(faviconUrl)}" alt="${escapeHtml(initial)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
           <span class="qa-fallback-initial" style="display:none;">${escapeHtml(initial)}</span>
-        </div>
-        <span class="qa-name">${escapeHtml(cleanTitle)}</span>
-        <span class="qa-badge">${escapeHtml(badgeText)}</span>
-      </a>
+        </a>
+        <span class="qa-name">${escapeHtml(rawTitle)}</span>
+      </div>
     `;
   }
 

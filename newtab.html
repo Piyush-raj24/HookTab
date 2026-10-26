@@ -137,10 +137,70 @@
         <!-- Live Suggestions / Auto-complete Dropdown -->
         <div id="search-suggestions" class="search-suggestions hidden"></div>
 
-        <!-- QUICK ACCESS: SLEEK FLOATING APP TILES -->
-        <div id="quick-access-bar" class="quick-access-bar minimal">
-          <div id="quick-access-grid" class="quick-access-grid">
-            <!-- Dynamically populated app tiles -->
+        <!-- QUICK ACCESS: BRAVE-STYLE TOP SITES ROW & 3-DOTS MENU -->
+        <div id="quick-access-bar" class="quick-access-bar brave-top-sites">
+          <div class="top-sites-wrapper">
+            <div id="quick-access-grid" class="quick-access-grid">
+              <!-- Dynamically populated squircle app tiles -->
+            </div>
+
+            <!-- 3-Dots Action Button -->
+            <button type="button" id="btn-top-sites-menu" class="top-sites-menu-btn" title="Top sites settings" aria-label="Top sites settings">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+                <circle cx="6" cy="12" r="1.5" fill="currentColor"/>
+                <circle cx="18" cy="12" r="1.5" fill="currentColor"/>
+              </svg>
+            </button>
+
+            <!-- 3-Dots Floating Popup Menu (Matches User Screenshot Exactly) -->
+            <div id="top-sites-menu-popover" class="top-sites-popover hidden">
+              <button type="button" class="popover-item" id="menu-add-site">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                  <rect x="3" y="3" width="18" height="18" rx="4"/>
+                  <line x1="12" y1="8" x2="12" y2="16"/>
+                  <line x1="8" y1="12" x2="16" y2="12"/>
+                </svg>
+                <span>Add site</span>
+              </button>
+              
+              <button type="button" class="popover-item" id="menu-toggle-more">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                  <polyline points="15 3 21 3 21 9"/>
+                  <line x1="21" y1="3" x2="14" y2="10"/>
+                  <polyline points="9 21 3 21 3 15"/>
+                  <line x1="3" y1="21" x2="10" y2="14"/>
+                </svg>
+                <span id="label-toggle-more">Show more items</span>
+              </button>
+
+              <div class="popover-divider"></div>
+
+              <button type="button" class="popover-item" id="menu-toggle-frequent">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                  <polyline points="3 3 3 8 8 8"/>
+                  <polyline points="12 7 12 12 15 15"/>
+                </svg>
+                <span id="label-toggle-frequent">Show frequently visited</span>
+              </button>
+
+              <div class="popover-divider"></div>
+
+              <button type="button" class="popover-item" id="menu-hide-sites">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
+                  <line x1="1" y1="1" x2="23" y2="23"/>
+                </svg>
+                <span>Hide top sites</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Pagination Indicator (Page 1 Pill, Page 2 Dot) -->
+          <div id="top-sites-pagination" class="top-sites-pagination hidden">
+            <button type="button" class="top-sites-dot active" data-page="0" aria-label="Page 1"></button>
+            <button type="button" class="top-sites-dot" data-page="1" aria-label="Page 2"></button>
           </div>
         </div>
       </section>
@@ -449,10 +509,16 @@
             <span>List</span>
           </button>
         </div>
-        <button id="btn-privacy-toggle" class="ghost-btn sm" style="width: 100%; justify-content: center; gap: 6px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-          <span>Privacy Mode (Screen Blur)</span>
-        </button>
+        <div style="display: flex; gap: 8px; width: 100%;">
+          <button id="btn-privacy-toggle" class="ghost-btn sm" style="flex: 1; justify-content: center; gap: 6px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+            <span>Privacy Mode</span>
+          </button>
+          <button id="btn-toggle-top-sites-vis" class="ghost-btn sm" style="flex: 1; justify-content: center; gap: 6px;" title="Show or hide the Top Sites bar">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span id="label-top-sites-vis">Top Sites</span>
+          </button>
+        </div>
       </section>
 
       <!-- PREFERENCES & BACKUP -->
@@ -637,6 +703,30 @@
           <button type="button" id="btn-cancel-bug-modal" class="ghost-btn">Cancel</button>
           <button type="button" id="btn-copy-diagnostics" class="ghost-btn sm" title="Copy diagnostic details to clipboard">📋 Copy Info</button>
           <button type="submit" class="primary-btn">Submit Report</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ADD TOP SITE MODAL -->
+  <div id="top-site-modal" class="modal-backdrop hidden">
+    <div class="modal-card sm-card" style="max-width: 380px;">
+      <div class="modal-header">
+        <h3 id="top-site-modal-title">Add site</h3>
+        <button id="btn-close-top-site-modal" class="close-icon-btn">&times;</button>
+      </div>
+      <form id="top-site-form" class="modal-form">
+        <div class="form-group">
+          <label for="top-site-name">Name *</label>
+          <input type="text" id="top-site-name" placeholder="e.g. YouTube, GitHub" required autocomplete="off">
+        </div>
+        <div class="form-group">
+          <label for="top-site-url">URL *</label>
+          <input type="url" id="top-site-url" placeholder="https://example.com" required autocomplete="off">
+        </div>
+        <div class="modal-actions" style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px;">
+          <button type="button" id="btn-cancel-top-site-modal" class="ghost-btn">Cancel</button>
+          <button type="submit" class="primary-btn">Save</button>
         </div>
       </form>
     </div>

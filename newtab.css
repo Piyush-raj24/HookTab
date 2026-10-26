@@ -207,6 +207,17 @@ body {
   transition: filter var(--transition-normal), background-image 0.5s ease;
 }
 
+.live-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  filter: blur(var(--custom-blur));
+  transform: scale(1.02);
+  transition: opacity 0.5s ease;
+}
+
 .bg-overlay {
   position: absolute;
   inset: 0;
@@ -837,6 +848,142 @@ body {
 .suggestion-item:hover,
 .suggestion-item.highlighted {
   background: var(--bg-glass-hover);
+}
+
+/* ==========================================================================
+   QUICK ACCESS: MOST USED & RECENT WEBSITES
+   ========================================================================== */
+.quick-access-bar {
+  width: 100%;
+  max-width: 780px;
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  animation: fadeIn 0.3s ease;
+}
+
+.quick-access-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.qa-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.qa-tab {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 99px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all var(--transition-fast);
+}
+
+.qa-tab:hover {
+  color: var(--text-primary);
+  border-color: var(--border-glow);
+}
+
+.qa-tab.active {
+  background: var(--bg-glass-hover);
+  color: var(--text-primary);
+  border-color: var(--accent-color);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
+.qa-indicator-label {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.quick-access-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(82px, 1fr));
+  gap: 10px;
+  width: 100%;
+}
+
+.qa-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 6px 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.qa-item:hover {
+  transform: translateY(-3px);
+  background: var(--bg-card-hover);
+  border-color: var(--accent-color);
+  box-shadow: var(--shadow-md), 0 0 12px var(--accent-glow);
+}
+
+.qa-icon-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.qa-icon {
+  width: 20px;
+  height: 20px;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.qa-fallback-initial {
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--accent-color);
+}
+
+.qa-name {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: center;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qa-badge {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  line-height: 1;
 }
 
 .sugg-left {
@@ -2029,6 +2176,93 @@ body[data-layout="list"] .bm-domain {
 .wallpaper-card.active {
   border-color: var(--accent-color);
   box-shadow: 0 0 12px var(--accent-glow);
+}
+
+/* LIVE ANIMATED WALLPAPERS IN DRAWER */
+.live-wallpaper-block {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.live-wp-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.live-wp-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+}
+
+.live-dot-pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 8px #22c55e;
+  animation: pulseDot 2s infinite ease-in-out;
+}
+
+@keyframes pulseDot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: 0.6; }
+}
+
+.live-fps-pill {
+  font-size: 0.62rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: #22c55e;
+  background: rgba(34, 197, 94, 0.12);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  padding: 1px 6px;
+  border-radius: 99px;
+}
+
+.wp-live-preview {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.live-badge {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  font-size: 0.55rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+  padding: 1px 4px;
+  border-radius: 3px;
+  background: rgba(34, 197, 94, 0.9);
+  color: #022310;
+  letter-spacing: 0.05em;
+}
+
+.preview-aurora {
+  background: radial-gradient(circle at 30% 30%, #10b981 0%, #06b6d4 40%, #030712 100%);
+}
+
+.preview-starfield {
+  background: radial-gradient(circle at 50% 50%, #4338ca 0%, #030712 70%);
+}
+
+.preview-matrix {
+  background: radial-gradient(circle at 50% 30%, #15803d 0%, #022c22 60%, #020617 100%);
+}
+
+.preview-fireflies {
+  background: radial-gradient(circle at 70% 30%, #ec4899 0%, #4338ca 50%, #030712 100%);
 }
 
 .wp-label {

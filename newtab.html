@@ -15,6 +15,7 @@
   <!-- Dynamic Background Layer -->
   <div id="bg-container" class="bg-container">
     <div id="bg-image" class="bg-image"></div>
+    <canvas id="live-canvas" class="live-canvas hidden"></canvas>
     <div id="bg-overlay" class="bg-overlay"></div>
   </div>
 
@@ -171,6 +172,26 @@
 
         <!-- Live Suggestions / Auto-complete Dropdown -->
         <div id="search-suggestions" class="search-suggestions hidden"></div>
+
+        <!-- QUICK ACCESS: MOST USED & RECENT WEBSITES -->
+        <div id="quick-access-bar" class="quick-access-bar">
+          <div class="quick-access-header">
+            <div class="qa-tabs">
+              <button type="button" id="qa-tab-frequent" class="qa-tab active" title="Most visited websites">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <span>Most Used</span>
+              </button>
+              <button type="button" id="qa-tab-recent" class="qa-tab" title="Recently opened websites">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                <span>Recently Visited</span>
+              </button>
+            </div>
+            <span id="qa-indicator-label" class="qa-indicator-label">Top Sites</span>
+          </div>
+          <div id="quick-access-grid" class="quick-access-grid">
+            <!-- Dynamically populated app tiles -->
+          </div>
+        </div>
       </section>
 
       <!-- BOOKMARKS HUB SECTION -->
@@ -380,6 +401,43 @@
           <div class="wallpaper-card" data-wp="gradient-minimal" title="Obsidian Velvet">
             <div class="wp-gradient gradient-minimal gradient-obsidian"></div>
             <span class="wp-label">Dark Velvet</span>
+          </div>
+        </div>
+
+        <!-- LIVE ANIMATED WALLPAPERS -->
+        <div class="live-wallpaper-block">
+          <div class="live-wp-header">
+            <div class="live-wp-title">
+              <span class="live-dot-pulse"></span>
+              <strong>Live Animated Wallpapers</strong>
+            </div>
+            <span class="live-fps-pill">60 FPS • GPU</span>
+          </div>
+          <div class="wallpaper-presets-grid live-presets-grid">
+            <div class="wallpaper-card" data-wp="live-aurora" title="Flowing Northern Lights (Ambient Aurora)">
+              <div class="wp-live-preview preview-aurora">
+                <span class="live-badge">LIVE</span>
+              </div>
+              <span class="wp-label">Flowing Aurora</span>
+            </div>
+            <div class="wallpaper-card" data-wp="live-starfield" title="Interactive 3D Warp Starfield">
+              <div class="wp-live-preview preview-starfield">
+                <span class="live-badge">LIVE</span>
+              </div>
+              <span class="wp-label">Warp Starfield</span>
+            </div>
+            <div class="wallpaper-card" data-wp="live-matrix" title="Cyberpunk Digital Rain">
+              <div class="wp-live-preview preview-matrix">
+                <span class="live-badge">LIVE</span>
+              </div>
+              <span class="wp-label">Matrix Rain</span>
+            </div>
+            <div class="wallpaper-card" data-wp="live-fireflies" title="Cosmic Luminous Orbs">
+              <div class="wp-live-preview preview-fireflies">
+                <span class="live-badge">LIVE</span>
+              </div>
+              <span class="wp-label">Cosmic Orbs</span>
+            </div>
           </div>
         </div>
 

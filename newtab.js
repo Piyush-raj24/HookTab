@@ -31,7 +31,9 @@
     darkness: 50,
     quickNotes: '',
     weatherUnit: 'C',
-    weatherCache: null
+    weatherCache: null,
+    quickAccessMode: 'frequent', // 'frequent' | 'recent'
+    recentSites: []
   };
 
   // Safe wrapper for chrome.storage or fallback to window.localStorage
@@ -71,6 +73,7 @@
   // =========================================================================
   const dom = {
     bgImage: document.getElementById('bg-image'),
+    liveCanvas: document.getElementById('live-canvas'),
     bgOverlay: document.getElementById('bg-overlay'),
     clock: document.getElementById('clock-display'),
     greeting: document.getElementById('greeting-display'),
@@ -101,6 +104,13 @@
     searchSuggestions: document.getElementById('search-suggestions'),
     modeWeb: document.getElementById('mode-web'),
     modeBookmarks: document.getElementById('mode-bookmarks'),
+
+    // Quick Access (Most Used & Recent)
+    quickAccessBar: document.getElementById('quick-access-bar'),
+    qaTabFrequent: document.getElementById('qa-tab-frequent'),
+    qaTabRecent: document.getElementById('qa-tab-recent'),
+    qaIndicatorLabel: document.getElementById('qa-indicator-label'),
+    quickAccessGrid: document.getElementById('quick-access-grid'),
 
     // Privacy Mode (Screen Share Blur)
     btnPrivacyToggle: document.getElementById('btn-privacy-toggle'),
@@ -521,6 +531,7 @@
     loadSettings(function () {
       initClockAndGreeting();
       initWeather();
+      initQuickAccess();
       applyTheme(state.theme);
       applyAccent(state.accentColor, state.accentColor2);
       applyWallpaper(state.wallpaper, state.customWallpaperData);
@@ -557,7 +568,9 @@
       'removedEngines',
       'quickNotes',
       'weatherUnit',
-      'weatherCache'
+      'weatherCache',
+      'quickAccessMode',
+      'recentSites'
     ];
 
     storage.get(keys, function (data) {
@@ -622,6 +635,14 @@
       if (data.quickNotes) {
         state.quickNotes = data.quickNotes;
         if (dom.notesTextarea) dom.notesTextarea.value = data.quickNotes;
+      }
+      if (data.quickAccessMode) {
+        state.quickAccessMode = data.quickAccessMode;
+      }
+      if (data.recentSites && Array.isArray(data.recentSites)) {
+        state.recentSites = data.recentSites;
+      } else {
+        state.recentSites = [];
       }
 
       callback();
@@ -819,21 +840,35 @@
     state.wallpaper = wpKey;
     dom.bgImage.className = 'bg-image'; // reset classes
 
-    if (wpKey === 'custom' && customData) {
-      dom.bgImage.style.backgroundImage = `url(${customData})`;
-    } else if (wpKey && wpKey.startsWith('gradient-')) {
-      const gradient = GRADIENT_WALLPAPERS[wpKey] || GRADIENT_WALLPAPERS['gradient-cosmic'];
-      dom.bgImage.style.backgroundImage = gradient;
-      dom.bgImage.classList.add(wpKey);
+    if (wpKey && wpKey.startsWith('live-')) {
+      // Live Animated Wallpaper Mode
+      dom.bgImage.style.backgroundImage = 'none';
+      if (dom.liveCanvas) {
+        dom.liveCanvas.classList.remove('hidden');
+        startLiveWallpaper(wpKey);
+      }
     } else {
-      // Local preset image: aurora, sunset, cyberpunk
-      const imgMap = {
-        aurora: 'assets/wallpapers/aurora.jpg',
-        sunset: 'assets/wallpapers/sunset.jpg',
-        cyberpunk: 'assets/wallpapers/cyberpunk.jpg'
-      };
-      const path = imgMap[wpKey] || imgMap.aurora;
-      dom.bgImage.style.backgroundImage = `url(${path})`;
+      // Static or Gradient Wallpaper Mode
+      stopLiveWallpaper();
+      if (dom.liveCanvas) {
+        dom.liveCanvas.classList.add('hidden');
+      }
+      if (wpKey === 'custom' && customData) {
+        dom.bgImage.style.backgroundImage = `url(${customData})`;
+      } else if (wpKey && wpKey.startsWith('gradient-')) {
+        const gradient = GRADIENT_WALLPAPERS[wpKey] || GRADIENT_WALLPAPERS['gradient-cosmic'];
+        dom.bgImage.style.backgroundImage = gradient;
+        dom.bgImage.classList.add(wpKey);
+      } else {
+        // Local preset image: aurora, sunset, cyberpunk
+        const imgMap = {
+          aurora: 'assets/wallpapers/aurora.jpg',
+          sunset: 'assets/wallpapers/sunset.jpg',
+          cyberpunk: 'assets/wallpapers/cyberpunk.jpg'
+        };
+        const path = imgMap[wpKey] || imgMap.aurora;
+        dom.bgImage.style.backgroundImage = `url(${path})`;
+      }
     }
 
     dom.wallpaperCards.forEach(card => {
@@ -841,6 +876,285 @@
     });
 
     storage.set({ wallpaper: wpKey, customWallpaperData: customData });
+  }
+
+  // =========================================================================
+  // 5.1 LIVE ANIMATED WALLPAPERS ENGINE (60 FPS, GPU-ACCELERATED)
+  // =========================================================================
+  let liveAnimId = null;
+  let activeLiveMode = null;
+  let liveCanvasCtx = null;
+  let liveCanvasWidth = 0;
+  let liveCanvasHeight = 0;
+  let mousePos = { x: 0, y: 0, targetX: 0, targetY: 0 };
+  let liveParticles = [];
+  let liveDrops = [];
+  let liveTime = 0;
+
+  function resizeLiveCanvas() {
+    if (!dom.liveCanvas) return;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    liveCanvasWidth = window.innerWidth;
+    liveCanvasHeight = window.innerHeight;
+    dom.liveCanvas.width = liveCanvasWidth * dpr;
+    dom.liveCanvas.height = liveCanvasHeight * dpr;
+    liveCanvasCtx = dom.liveCanvas.getContext('2d');
+    if (liveCanvasCtx) {
+      liveCanvasCtx.scale(dpr, dpr);
+    }
+  }
+
+  function startLiveWallpaper(wpKey) {
+    if (activeLiveMode === wpKey && liveAnimId) return;
+    stopLiveWallpaper();
+    activeLiveMode = wpKey;
+    resizeLiveCanvas();
+    if (!liveCanvasCtx) return;
+
+    liveTime = 0;
+    mousePos.x = liveCanvasWidth / 2;
+    mousePos.y = liveCanvasHeight / 2;
+    mousePos.targetX = liveCanvasWidth / 2;
+    mousePos.targetY = liveCanvasHeight / 2;
+
+    if (wpKey === 'live-starfield') {
+      const starCount = 360;
+      liveParticles = [];
+      for (let i = 0; i < starCount; i++) {
+        liveParticles.push({
+          x: (Math.random() - 0.5) * liveCanvasWidth * 2,
+          y: (Math.random() - 0.5) * liveCanvasHeight * 2,
+          z: Math.random() * liveCanvasWidth,
+          prevZ: 0,
+          color: Math.random() > 0.8 ? '#38bdf8' : (Math.random() > 0.6 ? '#fcd34d' : '#ffffff'),
+          size: Math.random() * 1.5 + 0.6
+        });
+      }
+    } else if (wpKey === 'live-matrix') {
+      const fontSize = 16;
+      const columns = Math.ceil(liveCanvasWidth / fontSize);
+      liveDrops = [];
+      const chars = '0123456789ABCDEFｦｱｳｴｵｶｷｹｺｻｼｽｾｿﾀﾂﾃﾅﾆﾇﾈﾊﾋﾎﾏﾐﾑﾒﾓﾔﾕﾗﾘﾜ';
+      for (let i = 0; i < columns; i++) {
+        liveDrops.push({
+          y: Math.random() * -100,
+          speed: Math.random() * 2 + 1.2,
+          chars: chars,
+          lastChar: chars[Math.floor(Math.random() * chars.length)]
+        });
+      }
+    } else if (wpKey === 'live-fireflies') {
+      const orbCount = 38;
+      liveParticles = [];
+      const colors = [
+        'rgba(236, 72, 153, ', // Pink / magenta
+        'rgba(99, 102, 241, ',  // Indigo
+        'rgba(6, 182, 212, ',   // Cyan
+        'rgba(168, 85, 247, ',  // Purple
+        'rgba(245, 158, 11, '   // Amber
+      ];
+      for (let i = 0; i < orbCount; i++) {
+        liveParticles.push({
+          x: Math.random() * liveCanvasWidth,
+          y: Math.random() * liveCanvasHeight,
+          vx: (Math.random() - 0.5) * 0.8,
+          vy: (Math.random() - 0.5) * 0.8,
+          r: Math.random() * 45 + 20,
+          color: colors[i % colors.length],
+          phase: Math.random() * Math.PI * 2,
+          pulseSpeed: 0.02 + Math.random() * 0.03
+        });
+      }
+    }
+
+    runLiveWallpaperLoop();
+  }
+
+  function stopLiveWallpaper() {
+    if (liveAnimId) {
+      cancelAnimationFrame(liveAnimId);
+      liveAnimId = null;
+    }
+    activeLiveMode = null;
+    if (liveCanvasCtx && dom.liveCanvas) {
+      liveCanvasCtx.clearRect(0, 0, liveCanvasWidth, liveCanvasHeight);
+    }
+  }
+
+  function runLiveWallpaperLoop() {
+    if (!activeLiveMode || !dom.liveCanvas || dom.liveCanvas.classList.contains('hidden')) {
+      return;
+    }
+    if (document.hidden) {
+      return;
+    }
+
+    liveTime += 0.016;
+    mousePos.x += (mousePos.targetX - mousePos.x) * 0.05;
+    mousePos.y += (mousePos.targetY - mousePos.y) * 0.05;
+
+    const ctx = liveCanvasCtx;
+    const w = liveCanvasWidth;
+    const h = liveCanvasHeight;
+
+    if (activeLiveMode === 'live-aurora') {
+      ctx.fillStyle = '#030712';
+      ctx.fillRect(0, 0, w, h);
+
+      const ribbons = [
+        { color1: 'rgba(16, 185, 129, 0.45)', color2: 'rgba(6, 182, 212, 0.1)', amp: 90, freq: 0.002, speed: 0.8, yBase: h * 0.45 },
+        { color1: 'rgba(6, 182, 212, 0.4)', color2: 'rgba(99, 102, 241, 0.08)', amp: 120, freq: 0.0015, speed: 0.6, yBase: h * 0.55 },
+        { color1: 'rgba(168, 85, 247, 0.35)', color2: 'rgba(236, 72, 153, 0.05)', amp: 75, freq: 0.0025, speed: 1.1, yBase: h * 0.65 },
+        { color1: 'rgba(34, 197, 94, 0.3)', color2: 'rgba(14, 165, 233, 0.06)', amp: 110, freq: 0.0018, speed: 0.9, yBase: h * 0.35 }
+      ];
+
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+      ribbons.forEach((rib) => {
+        const grad = ctx.createLinearGradient(0, rib.yBase - rib.amp * 1.5, 0, rib.yBase + rib.amp * 1.5);
+        grad.addColorStop(0, rib.color1);
+        grad.addColorStop(1, rib.color2);
+
+        ctx.beginPath();
+        ctx.moveTo(0, h);
+        for (let x = 0; x <= w; x += 14) {
+          const t = liveTime * rib.speed;
+          const y = rib.yBase 
+            + Math.sin(x * rib.freq + t) * rib.amp 
+            + Math.cos(x * rib.freq * 0.5 - t * 0.7) * (rib.amp * 0.4)
+            + Math.sin((x + t * 50) * 0.003) * 20;
+          ctx.lineTo(x, y);
+        }
+        ctx.lineTo(w, h);
+        ctx.closePath();
+        ctx.fillStyle = grad;
+        ctx.fill();
+      });
+      ctx.restore();
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
+      for (let i = 0; i < 25; i++) {
+        const px = ((i * 137.5) % w);
+        const py = ((i * 89.3 + liveTime * 15) % h);
+        const sz = Math.sin(liveTime * 2 + i) * 1 + 1.2;
+        ctx.beginPath();
+        ctx.arc(px, py, Math.max(0.4, sz), 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+    } else if (activeLiveMode === 'live-starfield') {
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.28)';
+      ctx.fillRect(0, 0, w, h);
+
+      const cx = w / 2 + (mousePos.x - w / 2) * 0.25;
+      const cy = h / 2 + (mousePos.y - h / 2) * 0.25;
+      const speed = 12;
+
+      ctx.lineWidth = 1.6;
+      for (let i = 0; i < liveParticles.length; i++) {
+        const p = liveParticles[i];
+        p.prevZ = p.z;
+        p.z -= speed;
+
+        if (p.z <= 0) {
+          p.z = w;
+          p.prevZ = w;
+          p.x = (Math.random() - 0.5) * w * 2;
+          p.y = (Math.random() - 0.5) * h * 2;
+        }
+
+        const k = 280 / p.z;
+        const px = p.x * k + cx;
+        const py = p.y * k + cy;
+
+        const pk = 280 / p.prevZ;
+        const prevPx = p.x * pk + cx;
+        const prevPy = p.y * pk + cy;
+
+        if (px >= 0 && px <= w && py >= 0 && py <= h) {
+          const alpha = Math.min(1, (1 - p.z / w) * 1.5);
+          ctx.strokeStyle = p.color;
+          ctx.globalAlpha = alpha;
+          ctx.beginPath();
+          ctx.moveTo(prevPx, prevPy);
+          ctx.lineTo(px, py);
+          ctx.stroke();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(px, py, p.size * (1 - p.z / w) * 1.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+      ctx.globalAlpha = 1.0;
+
+    } else if (activeLiveMode === 'live-matrix') {
+      ctx.fillStyle = 'rgba(2, 6, 23, 0.14)';
+      ctx.fillRect(0, 0, w, h);
+
+      const fontSize = 16;
+      ctx.font = `${fontSize}px monospace`;
+
+      for (let i = 0; i < liveDrops.length; i++) {
+        const drop = liveDrops[i];
+        const x = i * fontSize;
+        const y = drop.y * fontSize;
+
+        if (Math.random() > 0.85) {
+          drop.lastChar = drop.chars[Math.floor(Math.random() * drop.chars.length)];
+        }
+
+        ctx.fillStyle = '#ffffff';
+        ctx.shadowColor = '#22c55e';
+        ctx.shadowBlur = 10;
+        ctx.fillText(drop.lastChar, x, y);
+
+        ctx.fillStyle = '#22c55e';
+        ctx.shadowBlur = 4;
+        ctx.fillText(drop.lastChar, x, y - fontSize);
+
+        ctx.shadowBlur = 0;
+
+        drop.y += drop.speed * 0.4;
+        if (y > h && Math.random() > 0.975) {
+          drop.y = 0;
+          drop.speed = Math.random() * 2 + 1.2;
+        }
+      }
+
+    } else if (activeLiveMode === 'live-fireflies') {
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.save();
+      ctx.globalCompositeOperation = 'screen';
+
+      for (let i = 0; i < liveParticles.length; i++) {
+        const p = liveParticles[i];
+        p.x += p.vx + Math.sin(liveTime + p.phase) * 0.4;
+        p.y += p.vy + Math.cos(liveTime + p.phase) * 0.4;
+        p.phase += p.pulseSpeed;
+
+        if (p.x < -p.r) p.x = w + p.r;
+        if (p.x > w + p.r) p.x = -p.r;
+        if (p.y < -p.r) p.y = h + p.r;
+        if (p.y > h + p.r) p.y = -p.r;
+
+        const pulseRadius = p.r * (0.8 + 0.3 * Math.sin(p.phase));
+        const grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, pulseRadius);
+        grad.addColorStop(0, p.color + '0.85)');
+        grad.addColorStop(0.4, p.color + '0.35)');
+        grad.addColorStop(1, p.color + '0)');
+
+        ctx.fillStyle = grad;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, pulseRadius, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    }
+
+    liveAnimId = requestAnimationFrame(runLiveWallpaperLoop);
   }
 
   function applySliders(blurPx, darknessPct) {
@@ -1208,6 +1522,181 @@
     } catch (e) {
       return '';
     }
+  }
+
+  // =========================================================================
+  // 9.5 QUICK ACCESS: MOST USED & RECENT WEBSITES
+  // =========================================================================
+  const DEFAULT_TOP_SITES = [
+    { title: 'GitHub', url: 'https://github.com' },
+    { title: 'YouTube', url: 'https://youtube.com' },
+    { title: 'Reddit', url: 'https://reddit.com' },
+    { title: 'X / Twitter', url: 'https://x.com' },
+    { title: 'Wikipedia', url: 'https://wikipedia.org' },
+    { title: 'ChatGPT', url: 'https://chatgpt.com' },
+    { title: 'Brave Search', url: 'https://search.brave.com' },
+    { title: 'Gmail', url: 'https://mail.google.com' }
+  ];
+
+  function trackRecentSite(url, title) {
+    if (!url || !isSafeUrl(url)) return;
+    if (!Array.isArray(state.recentSites)) state.recentSites = [];
+
+    // Deduplicate
+    state.recentSites = state.recentSites.filter(s => s.url !== url);
+    state.recentSites.unshift({
+      url: url,
+      title: title || getDomain(url) || 'Site',
+      timestamp: Date.now()
+    });
+
+    if (state.recentSites.length > 30) {
+      state.recentSites = state.recentSites.slice(0, 30);
+    }
+
+    storage.set({ recentSites: state.recentSites });
+    if (state.quickAccessMode === 'recent') {
+      renderQuickAccess();
+    }
+  }
+
+  function initQuickAccess() {
+    if (!dom.quickAccessBar) return;
+
+    if (dom.qaTabFrequent) {
+      dom.qaTabFrequent.addEventListener('click', () => {
+        state.quickAccessMode = 'frequent';
+        storage.set({ quickAccessMode: 'frequent' });
+        dom.qaTabFrequent.classList.add('active');
+        if (dom.qaTabRecent) dom.qaTabRecent.classList.remove('active');
+        if (dom.qaIndicatorLabel) dom.qaIndicatorLabel.textContent = 'Top Sites • Most Visited';
+        renderQuickAccess();
+      });
+    }
+
+    if (dom.qaTabRecent) {
+      dom.qaTabRecent.addEventListener('click', () => {
+        state.quickAccessMode = 'recent';
+        storage.set({ quickAccessMode: 'recent' });
+        dom.qaTabRecent.classList.add('active');
+        if (dom.qaTabFrequent) dom.qaTabFrequent.classList.remove('active');
+        if (dom.qaIndicatorLabel) dom.qaIndicatorLabel.textContent = 'Recently Visited';
+        renderQuickAccess();
+      });
+    }
+
+    if (dom.quickAccessGrid) {
+      dom.quickAccessGrid.addEventListener('click', (e) => {
+        const item = e.target.closest('.qa-item');
+        if (!item) return;
+        const url = item.dataset.url;
+        if (!url || !isSafeUrl(url)) return;
+
+        const title = item.getAttribute('title') || url;
+        trackRecentSite(url, title);
+
+        if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
+          e.preventDefault();
+          chrome.tabs.create({ url: url });
+        }
+      });
+    }
+
+    // Set initial tab styling based on saved quickAccessMode
+    if (state.quickAccessMode === 'recent') {
+      if (dom.qaTabRecent) dom.qaTabRecent.classList.add('active');
+      if (dom.qaTabFrequent) dom.qaTabFrequent.classList.remove('active');
+      if (dom.qaIndicatorLabel) dom.qaIndicatorLabel.textContent = 'Recently Visited';
+    } else {
+      if (dom.qaTabFrequent) dom.qaTabFrequent.classList.add('active');
+      if (dom.qaTabRecent) dom.qaTabRecent.classList.remove('active');
+      if (dom.qaIndicatorLabel) dom.qaIndicatorLabel.textContent = 'Top Sites • Most Visited';
+    }
+
+    renderQuickAccess();
+  }
+
+  function renderQuickAccess() {
+    if (!dom.quickAccessGrid) return;
+
+    if (state.quickAccessMode === 'recent') {
+      // Recent mode
+      let recents = Array.isArray(state.recentSites) && state.recentSites.length > 0 
+        ? state.recentSites.slice(0, 10) 
+        : [];
+
+      if (recents.length === 0 && state.bookmarks.length > 0) {
+        // Fallback to recent bookmarks
+        recents = state.bookmarks.slice().reverse().slice(0, 8).map(b => ({
+          url: b.url,
+          title: b.title,
+          isBookmark: true
+        }));
+      }
+
+      if (recents.length === 0) {
+        dom.quickAccessGrid.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 12px; font-size: 0.76rem; color: var(--text-muted);">
+            No recently opened websites yet. Click any bookmark to populate this list.
+          </div>
+        `;
+        return;
+      }
+
+      dom.quickAccessGrid.innerHTML = recents.map(site => renderQuickAccessTile(site, false)).join('');
+    } else {
+      // Most Used / Frequent mode
+      if (typeof chrome !== 'undefined' && chrome.topSites && chrome.topSites.get) {
+        chrome.topSites.get((topSites) => {
+          let sites = topSites && topSites.length > 0 ? topSites.slice(0, 10) : [];
+          if (sites.length === 0) {
+            sites = getFallbackFrequentSites();
+          }
+          if (dom.quickAccessGrid) {
+            dom.quickAccessGrid.innerHTML = sites.map(s => renderQuickAccessTile(s, true)).join('');
+          }
+        });
+      } else {
+        const sites = getFallbackFrequentSites();
+        dom.quickAccessGrid.innerHTML = sites.map(s => renderQuickAccessTile(s, true)).join('');
+      }
+    }
+  }
+
+  function getFallbackFrequentSites() {
+    const visitedBookmarks = state.bookmarks
+      .filter(b => (b.visits || 0) > 0)
+      .sort((a, b) => (b.visits || 0) - (a.visits || 0))
+      .slice(0, 10);
+
+    if (visitedBookmarks.length > 0) {
+      return visitedBookmarks.map(b => ({
+        url: b.url,
+        title: b.title,
+        visits: b.visits
+      }));
+    }
+    return DEFAULT_TOP_SITES;
+  }
+
+  function renderQuickAccessTile(item, isFrequent) {
+    const url = item.url || '#';
+    const rawTitle = item.title || getDomain(url) || 'Site';
+    const cleanTitle = rawTitle.length > 14 ? rawTitle.slice(0, 13) + '…' : rawTitle;
+    const initial = (cleanTitle.charAt(0) || 'W').toUpperCase();
+    const faviconUrl = getFaviconUrl(url);
+    const badgeText = isFrequent && item.visits ? `${item.visits}x` : (isFrequent ? 'Top' : 'Recent');
+
+    return `
+      <a href="${escapeHtml(url)}" class="qa-item" data-url="${escapeHtml(url)}" title="${escapeHtml(item.title || url)}" target="_blank" rel="noopener noreferrer">
+        <div class="qa-icon-wrap">
+          <img class="qa-icon" src="${escapeHtml(faviconUrl)}" alt="${escapeHtml(initial)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='block';">
+          <span class="qa-fallback-initial" style="display:none;">${escapeHtml(initial)}</span>
+        </div>
+        <span class="qa-name">${escapeHtml(cleanTitle)}</span>
+        <span class="qa-badge">${escapeHtml(badgeText)}</span>
+      </a>
+    `;
   }
 
   // =========================================================================
@@ -1697,6 +2186,7 @@
     }
     // Increment visit count for smart sorting
     bm.visits = (bm.visits || 0) + 1;
+    trackRecentSite(bm.url, bm.title);
     storage.set({ bookmarks: state.bookmarks });
     if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
       chrome.tabs.create({ url: bm.url });
@@ -2807,6 +3297,31 @@
         e.preventDefault();
         dom.searchInput.focus();
         dom.searchInput.select();
+      }
+    });
+
+    // Live Wallpaper: Performance Lifecycle & Mouse Parallax
+    window.addEventListener('resize', () => {
+      if (state.wallpaper && state.wallpaper.startsWith('live-')) {
+        resizeLiveCanvas();
+      }
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      mousePos.targetX = e.clientX;
+      mousePos.targetY = e.clientY;
+    }, { passive: true });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        if (liveAnimId) {
+          cancelAnimationFrame(liveAnimId);
+          liveAnimId = null;
+        }
+      } else {
+        if (state.wallpaper && state.wallpaper.startsWith('live-') && !liveAnimId) {
+          runLiveWallpaperLoop();
+        }
       }
     });
   }

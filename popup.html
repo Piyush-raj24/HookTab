@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HookTab Quick Menu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #0a0b10;
+      color: #f8fafc;
+      width: 340px;
+      max-width: 100vw;
+      padding: 16px;
+      user-select: none;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .popup-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .brand-icon {
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #6366f1, #ec4899);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+    }
+    .brand-name {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+    .open-dash-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #cbd5e1;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .open-dash-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+      color: #fff;
+    }
+    .quick-add-card {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 14px;
+    }
+    .card-title {
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+    .tab-info-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .tab-favicon {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      object-fit: contain;
+    }
+    .tab-text {
+      flex: 1;
+      min-width: 0;
+    }
+    .tab-title {
+      font-size: 0.85rem;
+      font-weight: 600;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tab-url {
+      font-size: 0.72rem;
+      color: #64748b;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .form-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    select, input[type="text"] {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 6px;
+      color: #fff;
+      font-size: 0.8rem;
+      padding: 6px 8px;
+      outline: none;
+    }
+    select option {
+      background: #0f172a;
+    }
+    .btn-add-now {
+      width: 100%;
+      background: #6366f1;
+      color: #fff;
+      border: none;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.15s ease;
+    }
+    .btn-add-now:hover {
+      background: #4f46e5;
+    }
+    .quick-search-wrap {
+      position: relative;
+      margin-bottom: 8px;
+    }
+    .quick-search-wrap input {
+      padding-left: 28px;
+    }
+    .search-icon-pos {
+      position: absolute;
+      left: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #64748b;
+    }
+    .quick-results {
+      max-height: 160px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .result-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+      font-size: 0.8rem;
+      color: #cbd5e1;
+      text-decoration: none;
+    }
+    .result-row:hover {
+      background: rgba(99, 102, 241, 0.2);
+      color: #fff;
+    }
+    .toast-msg {
+      margin-top: 8px;
+      padding: 6px;
+      border-radius: 6px;
+      background: rgba(16, 185, 129, 0.2);
+      border: 1px solid #10b981;
+      color: #a7f3d0;
+      font-size: 0.75rem;
+      text-align: center;
+    }
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+  <div class="popup-header">
+    <div class="brand">
+      <div class="brand-icon">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      </div>
+      <span class="brand-name">HookTab</span>
+    </div>
+    <button id="btn-open-dashboard" class="open-dash-btn" title="Open Dashboard">
+      <span>Dashboard</span>
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+    </button>
+  </div>
+
+  <!-- Bookmark Current Page Card -->
+  <div class="quick-add-card">
+    <div class="card-title">Bookmark Current Tab</div>
+    <div class="tab-info-row">
+      <img id="current-favicon" class="tab-favicon" src="assets/icon-16.png" alt="Favicon">
+      <div class="tab-text">
+        <div id="current-title" class="tab-title">Loading tab...</div>
+        <div id="current-url" class="tab-url">https://...</div>
+      </div>
+    </div>
+    <div class="form-row">
+      <select id="quick-category">
+        <option value="AI & LLMs">AI & LLMs</option>
+        <option value="Dev & Code">Dev & Code</option>
+        <option value="Productivity" selected>Productivity</option>
+        <option value="Social & Chat">Social & Chat</option>
+        <option value="Media & Video">Media & Video</option>
+        <option value="News & Reading">News & Reading</option>
+        <option value="Shopping & Finance">Shopping & Finance</option>
+        <option value="Design & Creative">Design & Creative</option>
+        <option value="General">General</option>
+      </select>
+    </div>
+    <button id="btn-save-current" class="btn-add-now">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      <span>Save to Bookmarks</span>
+    </button>
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 8px; font-size: 0.68rem; color: #94a3b8;">
+      <span>Instant save shortcut:</span>
+      <kbd id="popup-shortcut-kbd" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); border-radius: 4px; padding: 2px 6px; font-family: monospace; color: #a5b4fc; cursor: pointer;" title="Click to customize shortcuts in browser">Alt+H</kbd>
+    </div>
+    <div id="popup-toast" class="toast-msg hidden">Saved to HookTab!</div>
+  </div>
+
+  <!-- Quick Search Existing Bookmarks -->
+  <div class="quick-search-wrap">
+    <svg class="search-icon-pos" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" id="popup-search" placeholder="Search 100+ Bookmarks...">
+  </div>
+  <div id="popup-results" class="quick-results"></div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "HookTab - Visual Bookmarks & Dashboard",
+  "version": "1.0.0",
+  "description": "High-performance visual dashboard for Chromium & Brave with drag-and-drop boards, smart categorization, multi-engine search, themes, and instant quick-save.",
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "bookmarks",
+    "tabs",
+    "activeTab"
+  ],
+  "host_permissions": [
+    "https://api.open-meteo.com/*",
+    "https://get.geojs.io/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "commands": {
+    "quick-save-bookmark": {
+      "suggested_key": {
+        "default": "Alt+H",
+        "mac": "Alt+H"
+      },
+      "description": "Quick Save current webpage to HookTab (Alt+H)"
+    },
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+H",
+        "mac": "Alt+Shift+H"
+      },
+      "description": "Open HookTab Quick Menu (Alt+Shift+H)"
+    }
+  },
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "HookTab Quick Menu (Alt+Shift+H)",
+    "default_icon": {
+      "16": "assets/icon-16.png",
+      "48": "assets/icon-48.png",
+      "128": "assets/icon-128.png"
+    }
+  },
+  "icons": {
+    "16": "assets/icon-16.png",
+    "48": "assets/icon-48.png",
+    "128": "assets/icon-128.png"
+  }
+}

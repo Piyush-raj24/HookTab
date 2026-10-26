@@ -1,0 +1,9 @@
+# Release build output
+dist/
+*.zip
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/

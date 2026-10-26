@@ -16,7 +16,7 @@
     privacyMode: false,
     activeCategory: 'All',
     searchQuery: '',
-    currentLayout: 'cards', // 'cards' | 'compact' | 'list'
+    currentLayout: 'board', // 'board' (Google Keep Boards) | 'cards' | 'compact' | 'list'
     currentSort: 'recent',
     searchEngine: 'google',
     customEngines: [],
@@ -33,7 +33,8 @@
     weatherUnit: 'C',
     weatherCache: null,
     quickAccessMode: 'frequent', // 'frequent' | 'recent'
-    recentSites: []
+    recentSites: [],
+    customBoards: ['Other bookmarks', 'kk', 'kl']
   };
 
   // Safe wrapper for chrome.storage or fallback to window.localStorage
@@ -570,7 +571,8 @@
       'weatherUnit',
       'weatherCache',
       'quickAccessMode',
-      'recentSites'
+      'recentSites',
+      'customBoards'
     ];
 
     storage.get(keys, function (data) {
@@ -643,6 +645,11 @@
         state.recentSites = data.recentSites;
       } else {
         state.recentSites = [];
+      }
+      if (data.customBoards && Array.isArray(data.customBoards) && data.customBoards.length > 0) {
+        state.customBoards = data.customBoards;
+      } else {
+        state.customBoards = ['Other bookmarks', 'kk', 'kl'];
       }
 
       callback();
@@ -1743,6 +1750,16 @@
     currentFilteredList = list;
     currentlyRenderedCount = 0;
 
+    // 1. GOOGLE KEEP & LUMILIST BOARD VIEW (Masonry Cards & Add Board)
+    if (state.currentLayout === 'board') {
+      if (dom.emptyState) dom.emptyState.classList.add('hidden');
+      if (dom.bookmarksGrid) dom.bookmarksGrid.classList.add('hidden');
+      if (dom.lumilistBoard) dom.lumilistBoard.classList.remove('hidden');
+      if (dom.bookmarksSentinel) dom.bookmarksSentinel.classList.add('hidden');
+      renderLumilistBoard(list);
+      return;
+    }
+
     if (list.length === 0) {
       dom.emptyState.classList.remove('hidden');
       if (dom.bookmarksSentinel) dom.bookmarksSentinel.classList.add('hidden');
@@ -1751,15 +1768,6 @@
       return;
     }
     dom.emptyState.classList.add('hidden');
-
-    // 1. LUMILIST BOARD VIEW (Kanban Columns)
-    if (state.currentLayout === 'board') {
-      if (dom.bookmarksGrid) dom.bookmarksGrid.classList.add('hidden');
-      if (dom.lumilistBoard) dom.lumilistBoard.classList.remove('hidden');
-      if (dom.bookmarksSentinel) dom.bookmarksSentinel.classList.add('hidden');
-      renderLumilistBoard(list);
-      return;
-    }
 
     if (dom.lumilistBoard) dom.lumilistBoard.classList.add('hidden');
     if (dom.bookmarksGrid) dom.bookmarksGrid.classList.remove('hidden');
@@ -2048,98 +2056,281 @@
   }
 
   // =========================================================================
-  // LUMILIST BOARD RENDERER (Kanban Columns with Cross-Column Dragging)
+  // LUMILIST & GOOGLE KEEP BOARD RENDERER (Masonry Cards & Add Board)
   // =========================================================================
   function renderLumilistBoard(list) {
     if (!dom.lumilistBoard) return;
     dom.lumilistBoard.innerHTML = '';
 
-    const categories = getCategories();
-    // Also include any categories present in current list
+    // Collect all boards: customBoards plus any categories from bookmarks
+    const boardSet = new Set(state.customBoards || ['Other bookmarks', 'kk', 'kl']);
     list.forEach(bm => {
-      const c = bm.category || 'General';
-      if (!categories.includes(c)) categories.push(c);
+      const cat = bm.category || 'Other bookmarks';
+      boardSet.add(cat);
     });
+    const allBoards = Array.from(boardSet);
 
-    categories.forEach(cat => {
-      const colBookmarks = list.filter(b => (b.category || 'General') === cat);
-      const col = document.createElement('div');
-      col.className = 'lumilist-col';
-      col.setAttribute('data-board', cat);
+    allBoards.forEach(boardName => {
+      const colBookmarks = list.filter(b => (b.category || 'Other bookmarks') === boardName);
+      const card = document.createElement('div');
+      card.className = 'keep-board-card';
+      card.setAttribute('data-board', boardName);
+      card.setAttribute('draggable', 'true');
 
-      col.innerHTML = `
-        <div class="lumilist-col-header">
-          <div class="lumilist-col-title">
-            <span class="lumilist-col-dot"></span>
-            <span class="lumilist-col-name">${escapeHtml(cat)}</span>
-            <span class="lumilist-col-count">${colBookmarks.length}</span>
+      card.innerHTML = `
+        <div class="keep-board-header">
+          <span class="keep-board-title" title="${escapeHtml(boardName)}">${escapeHtml(boardName)}</span>
+          <div class="keep-board-actions">
+            <button type="button" class="keep-board-action-btn btn-board-add" title="Add Bookmark to ${escapeHtml(boardName)}">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            </button>
+            <button type="button" class="keep-board-action-btn btn-board-del" title="Delete Board">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
           </div>
-          <button type="button" class="lumilist-add-btn" title="Add Bookmark to ${escapeHtml(cat)}">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          </button>
         </div>
-        <div class="lumilist-col-body" data-drop-board="${escapeHtml(cat)}"></div>
-        <div class="lumilist-col-footer">
-          <button type="button" class="lumilist-quick-add-btn">+ Add item</button>
-        </div>
+        <div class="keep-board-divider"></div>
+        <div class="keep-board-body" data-drop-board="${escapeHtml(boardName)}"></div>
       `;
 
-      const body = col.querySelector('.lumilist-col-body');
+      const body = card.querySelector('.keep-board-body');
+
+      // Populate bookmark items inside this board
       colBookmarks.forEach(bm => {
-        body.appendChild(createBookmarkCard(bm, true));
+        const row = document.createElement('div');
+        row.className = 'keep-item-row';
+        row.setAttribute('data-id', bm.id);
+        row.setAttribute('draggable', 'true');
+
+        const initial = ((bm.title || getDomain(bm.url)).charAt(0) || 'W').toUpperCase();
+        const faviconUrl = getFaviconUrl(bm.url);
+
+        row.innerHTML = `
+          <a href="${escapeHtml(bm.url)}" class="keep-item-link" title="${escapeHtml(bm.title || bm.url)}" target="_blank" rel="noopener noreferrer">
+            <img class="keep-item-favicon" src="${escapeHtml(faviconUrl)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <span class="keep-fallback-initial" style="display:none;">${escapeHtml(initial)}</span>
+            <span class="keep-item-title">${escapeHtml(bm.title || getDomain(bm.url))}</span>
+          </a>
+          <div class="keep-item-actions">
+            <button type="button" class="keep-item-btn btn-pin ${bm.favorite ? 'pinned' : ''}" title="${bm.favorite ? 'Unpin' : 'Pin'}">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="${bm.favorite ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M12 17v5M9 2h6l-1 5 4 4v2H6v-2l4-4-1-5z"/></svg>
+            </button>
+            <button type="button" class="keep-item-btn btn-del" title="Delete Bookmark">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+        `;
+
+        // Item click navigation
+        const link = row.querySelector('.keep-item-link');
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          openBookmark(bm);
+        });
+
+        // Pin toggle
+        row.querySelector('.btn-pin').addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggleFavorite(bm.id);
+        });
+
+        // Delete bookmark
+        row.querySelector('.btn-del').addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteBookmark(bm.id);
+        });
+
+        // Drag & drop item row
+        row.addEventListener('dragstart', (e) => {
+          e.stopPropagation();
+          row.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+          e.dataTransfer.setData('text/plain', bm.id);
+          e.dataTransfer.setData('source-type', 'bookmark');
+        });
+
+        row.addEventListener('dragend', () => {
+          row.classList.remove('dragging');
+        });
+
+        body.appendChild(row);
       });
 
-      // Drop zone for cross-board dragging
+      // Board Drag & Drop: Dropping bookmark into board body
       body.addEventListener('dragover', (e) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
-        body.classList.add('drag-over-col');
+        body.classList.add('drag-over-board');
       });
 
       body.addEventListener('dragleave', (e) => {
         if (!body.contains(e.relatedTarget)) {
-          body.classList.remove('drag-over-col');
+          body.classList.remove('drag-over-board');
         }
       });
 
       body.addEventListener('drop', (e) => {
         e.preventDefault();
-        body.classList.remove('drag-over-col');
+        body.classList.remove('drag-over-board');
         const draggedId = e.dataTransfer.getData('text/plain');
-        if (draggedId) {
+        const sourceType = e.dataTransfer.getData('source-type');
+
+        if (sourceType === 'bookmark' && draggedId) {
           const item = state.bookmarks.find(b => b.id === draggedId);
-          if (item) {
-            item.category = cat;
+          if (item && item.category !== boardName) {
+            item.category = boardName;
             storage.set({ bookmarks: state.bookmarks });
             renderCategoryTabs();
             renderBookmarks();
-            showToast(`Moved to ${cat}`);
+            showToast(`Moved to ${boardName}`);
           }
         }
       });
 
-      // Quick add buttons on column
-      col.querySelectorAll('.lumilist-add-btn, .lumilist-quick-add-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          openAddModalWithCategory(cat);
-        });
+      // Board Header Actions
+      card.querySelector('.btn-board-add').addEventListener('click', (e) => {
+        e.stopPropagation();
+        openAddModalWithCategory(boardName);
       });
 
-      dom.lumilistBoard.appendChild(col);
+      card.querySelector('.btn-board-del').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm(`Delete board "${boardName}"? Any bookmarks in this board will be moved to Other bookmarks.`)) {
+          state.customBoards = (state.customBoards || []).filter(b => b !== boardName);
+          state.bookmarks.forEach(b => {
+            if (b.category === boardName) b.category = 'Other bookmarks';
+          });
+          storage.set({
+            customBoards: state.customBoards,
+            bookmarks: state.bookmarks
+          });
+          renderCategoryTabs();
+          renderBookmarks();
+          showToast(`Deleted board "${boardName}"`);
+        }
+      });
+
+      // Board Reordering Drag & Drop
+      card.addEventListener('dragstart', (e) => {
+        if (e.target.closest('.keep-item-row')) return; // don't drag card if dragging a row
+        card.classList.add('board-dragging');
+        e.dataTransfer.setData('board-name', boardName);
+        e.dataTransfer.setData('source-type', 'board');
+      });
+
+      card.addEventListener('dragend', () => {
+        card.classList.remove('board-dragging');
+      });
+
+      card.addEventListener('dragover', (e) => {
+        if (e.dataTransfer.getData('source-type') === 'board') {
+          e.preventDefault();
+          card.classList.add('board-drag-over');
+        }
+      });
+
+      card.addEventListener('dragleave', () => {
+        card.classList.remove('board-drag-over');
+      });
+
+      card.addEventListener('drop', (e) => {
+        card.classList.remove('board-drag-over');
+        const sourceBoard = e.dataTransfer.getData('board-name');
+        if (sourceBoard && sourceBoard !== boardName) {
+          e.preventDefault();
+          let boards = state.customBoards || ['Other bookmarks', 'kk', 'kl'];
+          const fromIdx = boards.indexOf(sourceBoard);
+          const toIdx = boards.indexOf(boardName);
+          if (fromIdx !== -1 && toIdx !== -1) {
+            boards.splice(fromIdx, 1);
+            boards.splice(toIdx, 0, sourceBoard);
+            state.customBoards = boards;
+            storage.set({ customBoards: state.customBoards });
+            renderBookmarks();
+          }
+        }
+      });
+
+      dom.lumilistBoard.appendChild(card);
     });
 
-    // Add "+ Add Board" Card at the end of the board
-    const addCol = document.createElement('div');
-    addCol.className = 'lumilist-add-board-col';
-    addCol.innerHTML = `
-      <div class="add-board-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    // Dedicated "+ ADD BOARD" Dashed Card
+    const addBoardCard = document.createElement('div');
+    addBoardCard.className = 'keep-add-board-card';
+    addBoardCard.id = 'btn-add-new-board';
+    addBoardCard.title = 'Create a new board';
+
+    addBoardCard.innerHTML = `
+      <div class="add-board-normal-state">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="16"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+        <span>ADD BOARD</span>
       </div>
-      <strong>+ Add Board</strong>
-      <span>Create new Lumilist list</span>
+      <div class="add-board-input-state hidden">
+        <input type="text" class="add-board-text-input" placeholder="Board name..." maxlength="30">
+        <div class="add-board-btn-group">
+          <button type="button" class="add-board-btn-confirm">Add</button>
+          <button type="button" class="add-board-btn-cancel">✕</button>
+        </div>
+      </div>
     `;
-    addCol.addEventListener('click', handleAddNewBoard);
-    dom.lumilistBoard.appendChild(addCol);
+
+    const normalState = addBoardCard.querySelector('.add-board-normal-state');
+    const inputState = addBoardCard.querySelector('.add-board-input-state');
+    const textInput = addBoardCard.querySelector('.add-board-text-input');
+    const btnConfirm = addBoardCard.querySelector('.add-board-btn-confirm');
+    const btnCancel = addBoardCard.querySelector('.add-board-btn-cancel');
+
+    function openAddBoardInput() {
+      normalState.classList.add('hidden');
+      inputState.classList.remove('hidden');
+      textInput.value = '';
+      textInput.focus();
+    }
+
+    function closeAddBoardInput() {
+      inputState.classList.add('hidden');
+      normalState.classList.remove('hidden');
+      textInput.value = '';
+    }
+
+    function submitNewBoard() {
+      const name = textInput.value.trim();
+      if (!name) {
+        closeAddBoardInput();
+        return;
+      }
+      if (!Array.isArray(state.customBoards)) state.customBoards = [];
+      if (!state.customBoards.includes(name)) {
+        state.customBoards.push(name);
+      }
+      storage.set({ customBoards: state.customBoards });
+      renderCategoryTabs();
+      renderBookmarks();
+      showToast(`Board "${name}" created!`);
+    }
+
+    normalState.addEventListener('click', openAddBoardInput);
+    btnConfirm.addEventListener('click', submitNewBoard);
+    btnCancel.addEventListener('click', (e) => {
+      e.stopPropagation();
+      closeAddBoardInput();
+    });
+
+    textInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        submitNewBoard();
+      } else if (e.key === 'Escape') {
+        e.preventDefault();
+        closeAddBoardInput();
+      }
+    });
+
+    dom.lumilistBoard.appendChild(addBoardCard);
   }
 
   function openAddModalWithCategory(cat) {

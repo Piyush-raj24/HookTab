@@ -2924,8 +2924,29 @@ body[data-theme="minimal-light"] select option {
   padding: 10px 20px;
   border-radius: 99px;
   box-shadow: var(--shadow-md), 0 0 15px var(--accent-glow);
+  display: flex;
+  align-items: center;
+  gap: 12px;
   z-index: 30000;
   animation: toastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.toast-action-btn {
+  background: var(--accent-glow);
+  border: 1px solid var(--accent-color);
+  color: var(--accent-color);
+  border-radius: 99px;
+  padding: 3px 10px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.toast-action-btn:hover {
+  background: var(--accent-color);
+  color: #ffffff;
+  transform: scale(1.05);
 }
 
 @keyframes toastIn {

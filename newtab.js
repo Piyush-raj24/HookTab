@@ -1710,7 +1710,14 @@
         if (dom.topSitesMenuPopover) dom.topSitesMenuPopover.classList.add('hidden');
         if (dom.btnTopSitesMenu) dom.btnTopSitesMenu.classList.remove('active');
         renderQuickAccess();
-        showToast('Top sites hidden. Re-enable anytime from Settings (⚙️)');
+        showToast('Top sites hidden. Open Settings (⚙️) ➔ Display to turn back on.', 5000, {
+          text: 'Undo',
+          onClick: () => {
+            state.topSitesHidden = false;
+            storage.set({ topSitesHidden: false });
+            renderQuickAccess();
+          }
+        });
       });
     }
 
@@ -1794,11 +1801,19 @@
     // Apply visibility
     if (state.topSitesHidden) {
       dom.quickAccessBar.classList.add('hidden');
-      if (dom.labelTopSitesVis) dom.labelTopSitesVis.textContent = 'Show Top Sites';
+      if (dom.labelTopSitesVis) dom.labelTopSitesVis.textContent = 'Show';
+      if (dom.btnToggleTopSitesVis) {
+        dom.btnToggleTopSitesVis.classList.remove('ghost-btn');
+        dom.btnToggleTopSitesVis.classList.add('primary-btn');
+      }
       return;
     } else {
       dom.quickAccessBar.classList.remove('hidden');
-      if (dom.labelTopSitesVis) dom.labelTopSitesVis.textContent = 'Hide Top Sites';
+      if (dom.labelTopSitesVis) dom.labelTopSitesVis.textContent = 'Hide';
+      if (dom.btnToggleTopSitesVis) {
+        dom.btnToggleTopSitesVis.classList.remove('primary-btn');
+        dom.btnToggleTopSitesVis.classList.add('ghost-btn');
+      }
     }
 
     // Update Popover Menu Labels
@@ -3212,13 +3227,30 @@
   // 15. TOAST NOTIFICATIONS & UTILITIES
   // =========================================================================
   let toastTimer = null;
-  function showToast(message) {
-    dom.toast.textContent = message;
+  function showToast(message, duration = 2500, action = null) {
+    if (!dom.toast) return;
+    dom.toast.innerHTML = '';
+    const span = document.createElement('span');
+    span.textContent = message;
+    dom.toast.appendChild(span);
+
+    if (action && action.text && typeof action.onClick === 'function') {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'toast-action-btn';
+      btn.textContent = action.text;
+      btn.addEventListener('click', () => {
+        action.onClick();
+        dom.toast.classList.add('hidden');
+      });
+      dom.toast.appendChild(btn);
+    }
+
     dom.toast.classList.remove('hidden');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => {
       dom.toast.classList.add('hidden');
-    }, 2500);
+    }, duration);
   }
 
   // Utility: HTML Escaping

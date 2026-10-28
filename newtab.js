@@ -30,11 +30,13 @@
     blur: 8,
     darkness: 50,
     quickNotes: '',
+    timeFormat: '24', // '12' | '24'
     weatherUnit: 'C',
     weatherCache: null,
     quickAccessMode: 'frequent', // 'frequent' | 'recent'
     recentSites: [],
     customTopSites: [], // User custom added sites
+    removedTopSites: [], // URLs removed/hidden by user from top sites
     topSitesHidden: false, // Whether top sites row is hidden
     topSitesShowMore: false, // false = 1 row (7 items), true = 2 rows
     topSitesPage: 0, // 0 = page 1, 1 = page 2
@@ -80,9 +82,13 @@
     bgImage: document.getElementById('bg-image'),
     liveCanvas: document.getElementById('live-canvas'),
     bgOverlay: document.getElementById('bg-overlay'),
+    timeWidget: document.getElementById('time-widget'),
     clock: document.getElementById('clock-display'),
     greeting: document.getElementById('greeting-display'),
     date: document.getElementById('date-display'),
+    btnTime12: document.getElementById('btn-time-12'),
+    btnTime24: document.getElementById('btn-time-24'),
+    timeFormatPill: document.getElementById('time-format-pill'),
     bookmarksCountPill: document.getElementById('bookmarks-count-pill'),
     btnSyncBrave: document.getElementById('btn-sync-brave'),
     
@@ -120,10 +126,15 @@
     labelToggleMore: document.getElementById('label-toggle-more'),
     menuToggleFrequent: document.getElementById('menu-toggle-frequent'),
     labelToggleFrequent: document.getElementById('label-toggle-frequent'),
+    menuRestoreDivider: document.getElementById('menu-restore-divider'),
+    menuRestoreSites: document.getElementById('menu-restore-sites'),
     menuHideSites: document.getElementById('menu-hide-sites'),
     topSitesPagination: document.getElementById('top-sites-pagination'),
     btnToggleTopSitesVis: document.getElementById('btn-toggle-top-sites-vis'),
     labelTopSitesVis: document.getElementById('label-top-sites-vis'),
+    drawerTopSitesRestoreRow: document.getElementById('drawer-top-sites-restore-row'),
+    drawerTopSitesRestoreCount: document.getElementById('drawer-top-sites-restore-count'),
+    btnDrawerRestoreTopSites: document.getElementById('btn-drawer-restore-top-sites'),
 
     // Add Top Site Modal
     topSiteModal: document.getElementById('top-site-modal'),
@@ -305,6 +316,10 @@
     }
     if (dom.searchInput && state.searchMode === 'web') {
       dom.searchInput.placeholder = `Search ${config.name} or type URL... (Press / to focus)`;
+    }
+    if (dom.modeWeb) {
+      dom.modeWeb.textContent = config.name || 'Google';
+      dom.modeWeb.title = `Search ${config.name} / Web`;
     }
     if (dom.searchForm) {
       dom.searchForm.action = config.url;
@@ -588,12 +603,14 @@
       'customEngines',
       'removedEngines',
       'quickNotes',
+      'timeFormat',
       'weatherUnit',
       'weatherCache',
       'quickAccessMode',
       'recentSites',
       'customBoards',
       'customTopSites',
+      'removedTopSites',
       'topSitesHidden',
       'topSitesShowMore'
     ];
@@ -642,6 +659,7 @@
       if (data.theme) state.theme = data.theme;
       if (data.accentColor) state.accentColor = data.accentColor;
       if (data.accentColor2) state.accentColor2 = data.accentColor2;
+      if (data.timeFormat === '12' || data.timeFormat === '24') state.timeFormat = data.timeFormat;
       if (data.weatherUnit) state.weatherUnit = data.weatherUnit;
       if (data.weatherCache) state.weatherCache = data.weatherCache;
       if (data.wallpaper) state.wallpaper = data.wallpaper;
@@ -679,6 +697,11 @@
       } else {
         state.customTopSites = [];
       }
+      if (Array.isArray(data.removedTopSites)) {
+        state.removedTopSites = data.removedTopSites;
+      } else {
+        state.removedTopSites = [];
+      }
       if (typeof data.topSitesHidden === 'boolean') {
         state.topSitesHidden = data.topSitesHidden;
       }
@@ -693,29 +716,65 @@
   // =========================================================================
   // 4. CLOCK, GREETING & DATE DISPLAY
   // =========================================================================
-  function initClockAndGreeting() {
-    function tick() {
-      const now = new Date();
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      if (dom.clock) dom.clock.textContent = `${hours}:${minutes}`;
+  function updateClockDisplay() {
+    const now = new Date();
+    const rawHours = now.getHours();
+    const minutes = String(now.getMinutes()).padStart(2, '0');
 
-      // Date: e.g., Monday, October 26
-      const dateOpts = { weekday: 'long', month: 'short', day: 'numeric' };
-      if (dom.date) dom.date.textContent = now.toLocaleDateString(undefined, dateOpts);
-
-      // Greeting based on hour
-      const hr = now.getHours();
-      let greeting = 'Good evening';
-      if (hr >= 5 && hr < 12) greeting = 'Good morning';
-      else if (hr >= 12 && hr < 17) greeting = 'Good afternoon';
-      else if (hr >= 17 && hr < 22) greeting = 'Good evening';
-      else greeting = 'Night owl mode';
-
-      if (dom.greeting) dom.greeting.textContent = greeting;
+    if (state.timeFormat === '12') {
+      const ampm = rawHours >= 12 ? 'PM' : 'AM';
+      let hours12 = rawHours % 12;
+      if (hours12 === 0) hours12 = 12;
+      if (dom.clock) {
+        dom.clock.innerHTML = `${hours12}:${minutes} <span class="clock-ampm">${ampm}</span>`;
+      }
+    } else {
+      const hours24 = String(rawHours).padStart(2, '0');
+      if (dom.clock) {
+        dom.clock.textContent = `${hours24}:${minutes}`;
+      }
     }
-    tick();
-    setInterval(tick, 1000);
+
+    // Date: e.g., Monday, October 26
+    const dateOpts = { weekday: 'long', month: 'short', day: 'numeric' };
+    if (dom.date) dom.date.textContent = now.toLocaleDateString(undefined, dateOpts);
+
+    // Greeting based on hour
+    const hr = now.getHours();
+    let greeting = 'Good evening';
+    if (hr >= 5 && hr < 12) greeting = 'Good morning';
+    else if (hr >= 12 && hr < 17) greeting = 'Good afternoon';
+    else if (hr >= 17 && hr < 22) greeting = 'Good evening';
+    else greeting = 'Night owl mode';
+
+    if (dom.greeting) dom.greeting.textContent = greeting;
+  }
+
+  function setTimeFormat(format) {
+    if (format !== '12' && format !== '24') return;
+    state.timeFormat = format;
+    storage.set({ timeFormat: state.timeFormat });
+    updateTimeFormatUI();
+    updateClockDisplay();
+    showToast(`Time format: ${format === '12' ? '12-hour (AM/PM)' : '24-hour'}`);
+  }
+
+  function toggleTimeFormat() {
+    setTimeFormat(state.timeFormat === '12' ? '24' : '12');
+  }
+
+  function updateTimeFormatUI() {
+    if (dom.btnTime12) dom.btnTime12.classList.toggle('active', state.timeFormat === '12');
+    if (dom.btnTime24) dom.btnTime24.classList.toggle('active', state.timeFormat === '24');
+    if (dom.timeWidget) {
+      dom.timeWidget.title = `Clock (${state.timeFormat}-hour format) • Click to toggle 12h / 24h`;
+    }
+  }
+
+  function initClockAndGreeting() {
+    updateClockDisplay();
+    updateTimeFormatUI();
+    setInterval(updateClockDisplay, 1000);
   }
 
   // =========================================================================
@@ -1260,6 +1319,11 @@
     const query = e.target.value.trim();
     dom.btnClearSearch.classList.toggle('hidden', query.length === 0);
 
+    if (state.searchMode === 'bookmarks') {
+      filterBookmarks(query);
+      return;
+    }
+
     clearTimeout(debounceTimer);
     if (!query) {
       dom.searchSuggestions.classList.add('hidden');
@@ -1611,37 +1675,111 @@
     }
   }
 
+  function normalizeSiteUrl(url) {
+    if (!url || typeof url !== 'string') return '';
+    try {
+      const u = new URL(url.trim());
+      let pathname = u.pathname;
+      if (pathname.length > 1 && pathname.endsWith('/')) {
+        pathname = pathname.slice(0, -1);
+      }
+      return `${u.protocol}//${u.host.toLowerCase()}${pathname}${u.search ? u.search.toLowerCase() : ''}`;
+    } catch (e) {
+      return String(url).trim().replace(/\/+$/, '').toLowerCase();
+    }
+  }
+
+  function isTopSiteRemoved(url) {
+    if (!url || !Array.isArray(state.removedTopSites) || state.removedTopSites.length === 0) return false;
+    const targetNorm = normalizeSiteUrl(url);
+    return state.removedTopSites.some(r => r === url || normalizeSiteUrl(r) === targetNorm);
+  }
+
+  function updateTopSitesRestoreUI() {
+    const count = Array.isArray(state.removedTopSites) ? state.removedTopSites.length : 0;
+    const hasRemoved = count > 0;
+    if (dom.menuRestoreSites) {
+      dom.menuRestoreSites.style.display = hasRemoved ? 'flex' : 'none';
+    }
+    if (dom.menuRestoreDivider) {
+      dom.menuRestoreDivider.style.display = hasRemoved ? 'block' : 'none';
+    }
+    if (dom.drawerTopSitesRestoreRow) {
+      dom.drawerTopSitesRestoreRow.style.display = hasRemoved ? 'flex' : 'none';
+    }
+    if (dom.drawerTopSitesRestoreCount) {
+      dom.drawerTopSitesRestoreCount.textContent = `${count} hidden app${count === 1 ? '' : 's'}`;
+    }
+  }
+
+  function closeTopSitesMenu() {
+    if (dom.topSitesMenuPopover) dom.topSitesMenuPopover.classList.add('hidden');
+    const btn = document.getElementById('btn-top-sites-menu');
+    if (btn) btn.classList.remove('active');
+  }
+
+  function positionTopSitesPopover(btn) {
+    if (!btn || !dom.topSitesMenuPopover) return;
+    const rect = btn.getBoundingClientRect();
+    const popoverWidth = 230;
+
+    let top = rect.bottom + 6;
+    let left = rect.right - popoverWidth + 6;
+
+    if (left + popoverWidth > window.innerWidth - 12) {
+      left = window.innerWidth - popoverWidth - 12;
+    }
+    if (left < 12) {
+      left = 12;
+    }
+    if (top + 280 > window.innerHeight) {
+      top = rect.top - 280;
+    }
+
+    dom.topSitesMenuPopover.style.position = 'fixed';
+    dom.topSitesMenuPopover.style.top = `${top}px`;
+    dom.topSitesMenuPopover.style.left = `${left}px`;
+    dom.topSitesMenuPopover.style.right = 'auto';
+  }
+
   function initQuickAccess() {
     if (!dom.quickAccessBar) return;
 
-    // 1. Toggle 3-Dots Menu Popover
-    if (dom.btnTopSitesMenu && dom.topSitesMenuPopover) {
-      dom.btnTopSitesMenu.addEventListener('click', (e) => {
+    // 1. Toggle 3-Dots Menu Popover & Delegated Click Handling (Image 1 vs Image 2)
+    document.addEventListener('click', (e) => {
+      const menuBtn = e.target.closest('#btn-top-sites-menu');
+      if (menuBtn && dom.topSitesMenuPopover) {
         e.stopPropagation();
         const isOpen = !dom.topSitesMenuPopover.classList.contains('hidden');
         if (isOpen) {
-          dom.topSitesMenuPopover.classList.add('hidden');
-          dom.btnTopSitesMenu.classList.remove('active');
+          closeTopSitesMenu();
         } else {
+          positionTopSitesPopover(menuBtn);
           dom.topSitesMenuPopover.classList.remove('hidden');
-          dom.btnTopSitesMenu.classList.add('active');
+          menuBtn.classList.add('active');
         }
-      });
-    }
+        return;
+      }
 
-    // Close 3-Dots Menu Popover when clicking outside
-    document.addEventListener('click', (e) => {
-      if (dom.topSitesMenuPopover && !e.target.closest('#top-sites-menu-popover') && !e.target.closest('#btn-top-sites-menu')) {
-        dom.topSitesMenuPopover.classList.add('hidden');
-        if (dom.btnTopSitesMenu) dom.btnTopSitesMenu.classList.remove('active');
+      // Close 3-Dots Menu Popover when clicking outside
+      if (dom.topSitesMenuPopover && !dom.topSitesMenuPopover.classList.contains('hidden')) {
+        if (!e.target.closest('#top-sites-menu-popover') && !e.target.closest('#btn-top-sites-menu')) {
+          closeTopSitesMenu();
+        }
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      if (dom.topSitesMenuPopover && !dom.topSitesMenuPopover.classList.contains('hidden')) {
+        const btn = document.getElementById('btn-top-sites-menu');
+        if (btn) positionTopSitesPopover(btn);
       }
     });
 
     // 2. Menu Item: Add site
     if (dom.menuAddSite) {
       dom.menuAddSite.addEventListener('click', () => {
-        if (dom.topSitesMenuPopover) dom.topSitesMenuPopover.classList.add('hidden');
-        if (dom.btnTopSitesMenu) dom.btnTopSitesMenu.classList.remove('active');
+        closeTopSitesMenu();
         openTopSiteModal();
       });
     }
@@ -1665,9 +1803,19 @@
           url: url
         });
 
-        storage.set({ customTopSites: state.customTopSites });
+        // If previously removed, un-remove it so it can display
+        if (Array.isArray(state.removedTopSites)) {
+          const norm = normalizeSiteUrl(url);
+          state.removedTopSites = state.removedTopSites.filter(u => u !== url && normalizeSiteUrl(u) !== norm);
+        }
+
+        storage.set({
+          customTopSites: state.customTopSites,
+          removedTopSites: state.removedTopSites
+        });
         closeTopSiteModal();
         renderQuickAccess();
+        updateTopSitesRestoreUI();
         showToast(`Added "${name}" to Top Sites`);
       });
     }
@@ -1684,8 +1832,7 @@
       dom.menuToggleMore.addEventListener('click', () => {
         state.topSitesShowMore = !state.topSitesShowMore;
         storage.set({ topSitesShowMore: state.topSitesShowMore });
-        if (dom.topSitesMenuPopover) dom.topSitesMenuPopover.classList.add('hidden');
-        if (dom.btnTopSitesMenu) dom.btnTopSitesMenu.classList.remove('active');
+        closeTopSitesMenu();
         renderQuickAccess();
       });
     }
@@ -1695,10 +1842,23 @@
       dom.menuToggleFrequent.addEventListener('click', () => {
         state.quickAccessMode = state.quickAccessMode === 'frequent' ? 'recent' : 'frequent';
         storage.set({ quickAccessMode: state.quickAccessMode });
-        if (dom.topSitesMenuPopover) dom.topSitesMenuPopover.classList.add('hidden');
-        if (dom.btnTopSitesMenu) dom.btnTopSitesMenu.classList.remove('active');
+        closeTopSitesMenu();
         renderQuickAccess();
         showToast(state.quickAccessMode === 'frequent' ? 'Showing frequently visited sites' : 'Showing recently visited sites');
+      });
+    }
+
+    // 4.5 Restore removed sites (menu and drawer)
+    if (dom.menuRestoreSites) {
+      dom.menuRestoreSites.addEventListener('click', () => {
+        closeTopSitesMenu();
+        restoreAllTopSites();
+      });
+    }
+
+    if (dom.btnDrawerRestoreTopSites) {
+      dom.btnDrawerRestoreTopSites.addEventListener('click', () => {
+        restoreAllTopSites();
       });
     }
 
@@ -1707,10 +1867,9 @@
       dom.menuHideSites.addEventListener('click', () => {
         state.topSitesHidden = true;
         storage.set({ topSitesHidden: true });
-        if (dom.topSitesMenuPopover) dom.topSitesMenuPopover.classList.add('hidden');
-        if (dom.btnTopSitesMenu) dom.btnTopSitesMenu.classList.remove('active');
+        closeTopSitesMenu();
         renderQuickAccess();
-        showToast('Top sites hidden. Open Settings (⚙️) ➔ Display to turn back on.', 5000, {
+        showToast('Top sites hidden. Open Settings ➔ Display to turn back on.', 5000, {
           text: 'Undo',
           onClick: () => {
             state.topSitesHidden = false;
@@ -1744,20 +1903,48 @@
       });
     }
 
-    // 8. Grid Click Handlers (Opening and Removing sites)
+    // 8. Grid Click Handlers (Opening, Removing sites, and Add site button)
     if (dom.quickAccessGrid) {
       dom.quickAccessGrid.addEventListener('click', (e) => {
+        // If clicking 3-dots button, delegated document listener will handle it
+        if (e.target.closest('#btn-top-sites-menu')) {
+          return;
+        }
+
+        // Add Site Button (squircle or text)
+        const addTile = e.target.closest('#btn-add-top-site-tile, .qa-add-site-item');
+        if (addTile) {
+          e.preventDefault();
+          e.stopPropagation();
+          openTopSiteModal();
+          return;
+        }
+
         const removeBtn = e.target.closest('.qa-remove-btn');
         if (removeBtn) {
           e.preventDefault();
           e.stopPropagation();
-          const targetUrl = removeBtn.dataset.url;
-          removeTopSite(targetUrl);
+          const targetUrl = removeBtn.getAttribute('data-url') || removeBtn.dataset.url || removeBtn.closest('.qa-item')?.getAttribute('data-url');
+          const siteTitle = removeBtn.getAttribute('title')?.replace(/^Remove\s*/i, '') || removeBtn.closest('.qa-item')?.querySelector('.qa-name')?.textContent || '';
+          
+          if (targetUrl) {
+            const item = removeBtn.closest('.qa-item');
+            if (item) {
+              item.style.transition = 'transform 0.18s cubic-bezier(0.2, 0, 0, 1), opacity 0.18s ease';
+              item.style.transform = 'scale(0.35)';
+              item.style.opacity = '0';
+              setTimeout(() => {
+                removeTopSite(targetUrl, siteTitle);
+              }, 160);
+            } else {
+              removeTopSite(targetUrl, siteTitle);
+            }
+          }
           return;
         }
 
         const item = e.target.closest('.qa-item');
-        if (!item) return;
+        if (!item || item.classList.contains('qa-add-site-item')) return;
         const url = item.dataset.url;
         if (!url || !isSafeUrl(url)) return;
 
@@ -1767,6 +1954,7 @@
     }
 
     renderQuickAccess();
+    updateTopSitesRestoreUI();
   }
 
   function openTopSiteModal() {
@@ -1781,18 +1969,57 @@
     if (dom.topSiteModal) dom.topSiteModal.classList.add('hidden');
   }
 
-  function removeTopSite(url) {
+  function removeTopSite(url, title) {
     if (!url) return;
+    const targetNorm = normalizeSiteUrl(url);
+
+    if (!Array.isArray(state.removedTopSites)) state.removedTopSites = [];
+    if (!state.removedTopSites.some(u => u === url || normalizeSiteUrl(u) === targetNorm)) {
+      state.removedTopSites.push(url);
+    }
+
     if (Array.isArray(state.customTopSites)) {
-      state.customTopSites = state.customTopSites.filter(s => s.url !== url);
-      storage.set({ customTopSites: state.customTopSites });
+      state.customTopSites = state.customTopSites.filter(s => s.url !== url && normalizeSiteUrl(s.url) !== targetNorm);
     }
     if (Array.isArray(state.recentSites)) {
-      state.recentSites = state.recentSites.filter(s => s.url !== url);
-      storage.set({ recentSites: state.recentSites });
+      state.recentSites = state.recentSites.filter(s => s.url !== url && normalizeSiteUrl(s.url) !== targetNorm);
     }
+
+    storage.set({
+      removedTopSites: state.removedTopSites,
+      customTopSites: state.customTopSites,
+      recentSites: state.recentSites
+    });
+
     renderQuickAccess();
-    showToast('Removed site');
+    updateTopSitesRestoreUI();
+
+    const name = title || getDomain(url) || 'site';
+    showToast(`Removed "${name}" from top sites`, 5000, {
+      text: 'Undo',
+      onClick: () => {
+        restoreTopSite(url, name);
+      }
+    });
+  }
+
+  function restoreTopSite(url, title) {
+    if (!url || !Array.isArray(state.removedTopSites)) return;
+    const targetNorm = normalizeSiteUrl(url);
+    state.removedTopSites = state.removedTopSites.filter(u => u !== url && normalizeSiteUrl(u) !== targetNorm);
+    storage.set({ removedTopSites: state.removedTopSites });
+    renderQuickAccess();
+    updateTopSitesRestoreUI();
+    const name = title || getDomain(url) || 'site';
+    showToast(`Restored "${name}" to top sites`);
+  }
+
+  function restoreAllTopSites() {
+    state.removedTopSites = [];
+    storage.set({ removedTopSites: [] });
+    renderQuickAccess();
+    updateTopSitesRestoreUI();
+    showToast('All removed top sites restored');
   }
 
   function renderQuickAccess() {
@@ -1833,7 +2060,7 @@
     if (state.quickAccessMode === 'recent') {
       let recents = Array.isArray(state.recentSites) ? state.recentSites.slice() : [];
       if (recents.length === 0 && state.bookmarks.length > 0) {
-        recents = state.bookmarks.slice().reverse().slice(0, 14).map(b => ({
+        recents = state.bookmarks.slice().reverse().slice(0, 28).map(b => ({
           url: b.url,
           title: b.title
         }));
@@ -1843,7 +2070,7 @@
       // Frequent / Most Visited
       if (typeof chrome !== 'undefined' && chrome.topSites && chrome.topSites.get) {
         chrome.topSites.get((topSites) => {
-          let sites = topSites && topSites.length > 0 ? topSites.slice(0, 14) : [];
+          let sites = Array.isArray(topSites) ? topSites : [];
           if (sites.length === 0) {
             sites = getFallbackFrequentSites();
           }
@@ -1857,71 +2084,78 @@
   }
 
   function buildAndRenderTopSites(autoSites) {
-    // Merge customTopSites first, then autoSites (deduplicating URLs)
+    // Merge customTopSites first, then autoSites (deduplicating URLs & excluding removed ones)
     const combined = [];
     const seenUrls = new Set();
 
     (state.customTopSites || []).forEach(site => {
-      if (site.url && !seenUrls.has(site.url)) {
-        seenUrls.add(site.url);
-        combined.push({ ...site, isCustom: true });
+      if (site.url && !isTopSiteRemoved(site.url)) {
+        const norm = normalizeSiteUrl(site.url);
+        if (!seenUrls.has(norm)) {
+          seenUrls.add(norm);
+          combined.push({ ...site, isCustom: true });
+        }
       }
     });
 
     (autoSites || []).forEach(site => {
-      if (site.url && !seenUrls.has(site.url)) {
-        seenUrls.add(site.url);
-        combined.push({ ...site, isCustom: false });
+      if (site.url && !isTopSiteRemoved(site.url)) {
+        const norm = normalizeSiteUrl(site.url);
+        if (!seenUrls.has(norm)) {
+          seenUrls.add(norm);
+          combined.push({ ...site, isCustom: false });
+        }
       }
     });
 
     if (combined.length === 0) {
-      dom.quickAccessGrid.innerHTML = `
-        <div style="text-align: center; padding: 12px; font-size: 0.78rem; color: rgba(255,255,255,0.7); text-shadow: 0 1px 2px rgba(0,0,0,0.5);">
-          No top sites yet. Click the three dots (•••) to Add a site.
-        </div>
-      `;
+      dom.quickAccessGrid.innerHTML = renderAddSiteTile();
       if (dom.topSitesPagination) dom.topSitesPagination.classList.add('hidden');
+      updateTopSitesRestoreUI();
       return;
     }
 
-    const PAGE_SIZE = 7;
+    const PAGE_SIZE = 6;
     let displayList = [];
 
     if (state.topSitesShowMore) {
-      // 2-row expanded view (up to 14 items)
-      displayList = combined.slice(0, 14);
+      // 2-row expanded view (up to 13 items + 1 Add Site button = 14 items)
+      displayList = combined.slice(0, 13);
       if (dom.topSitesPagination) dom.topSitesPagination.classList.add('hidden');
     } else {
       // 1-row view with pagination
       if (combined.length > PAGE_SIZE) {
         if (dom.topSitesPagination) {
           dom.topSitesPagination.classList.remove('hidden');
+        }
+        const maxPage = Math.ceil(combined.length / PAGE_SIZE) - 1;
+        if (state.topSitesPage > maxPage) {
+          state.topSitesPage = Math.max(0, maxPage);
+        }
+        const start = (state.topSitesPage || 0) * PAGE_SIZE;
+        displayList = combined.slice(start, start + PAGE_SIZE);
+        if (dom.topSitesPagination) {
           const dots = dom.topSitesPagination.querySelectorAll('.top-sites-dot');
           dots.forEach((dot, idx) => {
             dot.classList.toggle('active', idx === state.topSitesPage);
           });
         }
-        const start = (state.topSitesPage || 0) * PAGE_SIZE;
-        displayList = combined.slice(start, start + PAGE_SIZE);
-        if (displayList.length === 0) {
-          state.topSitesPage = 0;
-          displayList = combined.slice(0, PAGE_SIZE);
-        }
       } else {
+        state.topSitesPage = 0;
         if (dom.topSitesPagination) dom.topSitesPagination.classList.add('hidden');
         displayList = combined.slice(0, PAGE_SIZE);
       }
     }
 
-    dom.quickAccessGrid.innerHTML = displayList.map(site => renderQuickAccessTile(site)).join('');
+    dom.quickAccessGrid.innerHTML = displayList.map(site => renderQuickAccessTile(site)).join('') + renderAddSiteTile();
+    updateTopSitesRestoreUI();
   }
 
   function getFallbackFrequentSites() {
     const visitedBookmarks = state.bookmarks
       .filter(b => (b.visits || 0) > 0)
       .sort((a, b) => (b.visits || 0) - (a.visits || 0))
-      .slice(0, 14);
+      .slice(0, 28);
 
     if (visitedBookmarks.length > 0) {
       return visitedBookmarks.map(b => ({
@@ -1941,12 +2175,35 @@
 
     return `
       <div class="qa-item" data-url="${escapeHtml(url)}" title="${escapeHtml(item.title || url)}">
-        <button type="button" class="qa-remove-btn" data-url="${escapeHtml(url)}" title="Remove ${escapeHtml(rawTitle)}">&times;</button>
+        <button type="button" class="qa-remove-btn" data-url="${escapeHtml(url)}" title="Remove ${escapeHtml(rawTitle)}" aria-label="Remove ${escapeHtml(rawTitle)}">&times;</button>
         <a href="${escapeHtml(url)}" class="qa-squircle" target="_blank" rel="noopener noreferrer">
           <img class="qa-icon" src="${escapeHtml(faviconUrl)}" alt="${escapeHtml(initial)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
           <span class="qa-fallback-initial" style="display:none;">${escapeHtml(initial)}</span>
         </a>
         <span class="qa-name">${escapeHtml(rawTitle)}</span>
+      </div>
+    `;
+  }
+
+  function renderAddSiteTile() {
+    return `
+      <div class="qa-item qa-add-site-item" id="qa-add-site-item" title="Add site">
+        <div class="qa-squircle-wrap">
+          <button type="button" class="qa-squircle qa-add-squircle" id="btn-add-top-site-tile" title="Add site" aria-label="Add site">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
+          <button type="button" id="btn-top-sites-menu" class="top-sites-menu-btn" title="Top sites settings" aria-label="Top sites settings">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor">
+              <circle cx="12" cy="4" r="2.2"/>
+              <circle cx="12" cy="12" r="2.2"/>
+              <circle cx="12" cy="20" r="2.2"/>
+            </svg>
+          </button>
+        </div>
+        <span class="qa-name">Add site</span>
       </div>
     `;
   }
@@ -2030,7 +2287,7 @@
         // Pinned Section
         const pinHeader = document.createElement('div');
         pinHeader.className = 'keep-section-header';
-        pinHeader.innerHTML = `<span>📌 PINNED</span><span class="keep-badge">${pinned.length}</span>`;
+        pinHeader.innerHTML = `<span>PINNED</span><span class="keep-badge">${pinned.length}</span>`;
         dom.bookmarksGrid.appendChild(pinHeader);
 
         const pinGrid = document.createElement('div');
@@ -2713,7 +2970,7 @@
 
   function openBookmark(bm) {
     if (!bm || !bm.url || !isSafeUrl(bm.url)) {
-      showToast('⚠️ Blocked unsafe or invalid URL');
+      showToast('Blocked unsafe or invalid URL');
       return;
     }
     // Increment visit count for smart sorting
@@ -2796,7 +3053,7 @@
     }
 
     if (!isSafeUrl(url)) {
-      showToast('⚠️ Please enter a valid http:// or https:// URL');
+      showToast('Please enter a valid http:// or https:// URL');
       return;
     }
 
@@ -2867,9 +3124,7 @@
   // 12. BROWSER SYNC & IMPORT/EXPORT
   // =========================================================================
   function checkBraveBookmarksAvailable() {
-    if (typeof chrome !== 'undefined' && chrome.bookmarks && chrome.bookmarks.getTree) {
-      dom.btnSyncBrave.style.display = 'inline-flex';
-    }
+    if (dom.btnSyncBrave) dom.btnSyncBrave.style.display = 'inline-flex';
   }
 
   function syncCloudBookmarks() {
@@ -2878,6 +3133,7 @@
       return;
     }
 
+    if (dom.btnSyncBrave) dom.btnSyncBrave.classList.add('syncing');
     showToast('Starting Two-Way Browser Sync with native bookmarks...');
     chrome.bookmarks.getTree((tree) => {
       const nativeBookmarks = [];
@@ -2936,6 +3192,7 @@
       const toPush = state.bookmarks.filter(b => !nativeUrls.has(b.url.toLowerCase().replace(/\/$/, '')));
 
       function finishSync(pushedCount) {
+        if (dom.btnSyncBrave) dom.btnSyncBrave.classList.remove('syncing');
         storage.set({ bookmarks: state.bookmarks });
         renderPagesBar();
         renderCategoryTabs();
@@ -3124,7 +3381,7 @@
     renderBookmarks();
 
     const uniqueCats = Object.keys(catCounts).length;
-    showToast(`🪄 Organized ${state.bookmarks.length} bookmarks into ${uniqueCats} categories! (${modifiedCount} updated)`);
+    showToast(`Organized ${state.bookmarks.length} bookmarks into ${uniqueCats} categories! (${modifiedCount} updated)`);
   }
 
   // =========================================================================
@@ -3316,11 +3573,11 @@
       url = 'https://' + url;
     }
     if (!isSafeUrl(url)) {
-      showToast('⚠️ Please enter a valid http:// or https:// search URL');
+      showToast('Please enter a valid http:// or https:// search URL');
       return;
     }
     if (iconUrl && !isSafeUrl(iconUrl) && !iconUrl.startsWith('data:image/')) {
-      showToast('⚠️ Invalid icon URL');
+      showToast('Invalid icon URL');
       return;
     }
 
@@ -3392,7 +3649,7 @@
     const diag = getDiagnosticsInfo();
     const formatted = JSON.stringify(diag, null, 2);
     navigator.clipboard.writeText(formatted).then(() => {
-      showToast('📋 Diagnostics copied to clipboard!');
+      showToast('Diagnostics copied to clipboard!');
     }).catch(() => {
       showToast('Could not copy to clipboard.');
     });
@@ -3400,7 +3657,7 @@
 
   function handleBugReportSubmit(e) {
     e.preventDefault();
-    const type = dom.bugType ? dom.bugType.value : '🐛 Bug Report';
+    const type = dom.bugType ? dom.bugType.value : 'Bug Report';
     const title = dom.bugTitle ? dom.bugTitle.value.trim() : '';
     const desc = dom.bugDescription ? dom.bugDescription.value.trim() : '';
     const diag = getDiagnosticsInfo();
@@ -3438,6 +3695,9 @@
       dom.searchInput.value = '';
       dom.btnClearSearch.classList.add('hidden');
       dom.searchSuggestions.classList.add('hidden');
+      if (state.searchMode === 'bookmarks') {
+        filterBookmarks('');
+      }
       dom.searchInput.focus();
     });
 
@@ -3491,6 +3751,13 @@
         if (dom.modeBookmarks) dom.modeBookmarks.classList.remove('active');
         const eng = getEngineConfig(state.searchEngine);
         dom.searchInput.placeholder = `Search ${eng.name} or type URL... (Press / to focus)`;
+        if (state.searchQuery) {
+          filterBookmarks('');
+        }
+        if (dom.searchInput.value.trim()) {
+          generateSuggestions(dom.searchInput.value.trim());
+        }
+        dom.searchInput.focus();
       });
     }
 
@@ -3500,6 +3767,11 @@
         dom.modeBookmarks.classList.add('active');
         if (dom.modeWeb) dom.modeWeb.classList.remove('active');
         dom.searchInput.placeholder = 'Search within your Bookmarks...';
+        dom.searchSuggestions.classList.add('hidden');
+        if (dom.searchInput.value.trim()) {
+          filterBookmarks(dom.searchInput.value.trim());
+        }
+        dom.searchInput.focus();
       });
     }
 
@@ -3755,6 +4027,25 @@
       dom.accentColor2Input.addEventListener('input', (e) => {
         applyAccent(state.accentColor, e.target.value);
       });
+    }
+
+    // Clock widget toggle format on click or keypress
+    if (dom.timeWidget) {
+      dom.timeWidget.addEventListener('click', toggleTimeFormat);
+      dom.timeWidget.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          toggleTimeFormat();
+        }
+      });
+    }
+
+    // Settings drawer 12h / 24h buttons
+    if (dom.btnTime12) {
+      dom.btnTime12.addEventListener('click', () => setTimeFormat('12'));
+    }
+    if (dom.btnTime24) {
+      dom.btnTime24.addEventListener('click', () => setTimeFormat('24'));
     }
 
     // Weather widget toggle unit on click or keypress

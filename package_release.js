@@ -36,7 +36,7 @@ const includeItems = [
   'assets'
 ];
 
-console.log(`🚀 Packaging HookTab v${version} for GitHub Releases...`);
+console.log(`[RELEASE] Packaging HookTab v${version} for GitHub Releases...`);
 
 // Temporary staging directory
 const stagingDir = path.join(releaseDir, 'staging');
@@ -65,7 +65,7 @@ includeItems.forEach(item => {
     copyRecursive(src, dest);
     console.log(`  ✓ Added ${item}`);
   } else {
-    console.warn(`  ⚠️ Warning: ${item} not found`);
+    console.warn(`  [WARN] ${item} not found`);
   }
 });
 
@@ -79,9 +79,9 @@ try {
   execSync(psCmd, { stdio: 'inherit' });
   const stat = fs.statSync(zipPath);
   const sizeMb = (stat.size / 1024 / 1024).toFixed(2);
-  console.log(`\n🎉 Release archive created successfully!`);
-  console.log(`📁 File: ${zipPath} (${sizeMb} MB)`);
-  console.log(`👉 Ready to upload to GitHub Releases and Chrome Web Store.`);
+  console.log(`\n[SUCCESS] Release archive created successfully!`);
+  console.log(`File: ${zipPath} (${sizeMb} MB)`);
+  console.log(`Ready to upload to GitHub Releases and Chrome Web Store.`);
 } catch (err) {
   console.error('Error creating archive:', err.message);
 } finally {

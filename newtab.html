@@ -25,18 +25,17 @@
     <header class="top-nav">
       <div class="nav-left">
         <div class="brand-badge" title="HookTab Visual Dashboard">
-          <div class="brand-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
-            </svg>
-          </div>
           <span class="brand-title">HookTab</span>
         </div>
+        <button type="button" id="btn-sync-brave" class="ghost-btn sm" title="Two-Way Browser Sync (Brave Sync / Chrome Sync)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+          <span>Browser Sync</span>
+        </button>
       </div>
 
       <!-- Time & Mini Weather in Center -->
       <div class="nav-center">
-        <div class="time-widget">
+        <div id="time-widget" class="time-widget" role="button" tabindex="0" title="Clock • Click to toggle 12h / 24h format">
           <div id="clock-display" class="clock-display">00:00</div>
           <span id="date-display" class="date-text">Loading date...</span>
         </div>
@@ -132,6 +131,12 @@
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             </button>
           </form>
+
+          <!-- Search Mode Toggle Pill: Google Web Search vs Bookmarks -->
+          <div class="search-mode-pill" id="search-mode-pill" title="Toggle Search: Google Web or Bookmarks">
+            <button type="button" id="mode-web" class="mode-btn active" title="Search Google / Web">Google</button>
+            <button type="button" id="mode-bookmarks" class="mode-btn" title="Search within Bookmarks">Bookmarks</button>
+          </div>
         </div>
 
         <!-- Live Suggestions / Auto-complete Dropdown -->
@@ -141,17 +146,8 @@
         <div id="quick-access-bar" class="quick-access-bar brave-top-sites">
           <div class="top-sites-wrapper">
             <div id="quick-access-grid" class="quick-access-grid">
-              <!-- Dynamically populated squircle app tiles -->
+              <!-- Dynamically populated squircle app tiles & Add site tile with hover 3-dots -->
             </div>
-
-            <!-- 3-Dots Action Button -->
-            <button type="button" id="btn-top-sites-menu" class="top-sites-menu-btn" title="Top sites settings" aria-label="Top sites settings">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
-                <circle cx="6" cy="12" r="1.5" fill="currentColor"/>
-                <circle cx="18" cy="12" r="1.5" fill="currentColor"/>
-              </svg>
-            </button>
 
             <!-- 3-Dots Floating Popup Menu (Matches User Screenshot Exactly) -->
             <div id="top-sites-menu-popover" class="top-sites-popover hidden">
@@ -183,6 +179,16 @@
                   <polyline points="12 7 12 12 15 15"/>
                 </svg>
                 <span id="label-toggle-frequent">Show frequently visited</span>
+              </button>
+
+              <div class="popover-divider" id="menu-restore-divider" style="display: none;"></div>
+
+              <button type="button" class="popover-item" id="menu-restore-sites" style="display: none;">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                  <polyline points="3 3 3 8 8 8"/>
+                </svg>
+                <span>Restore removed sites</span>
               </button>
 
               <div class="popover-divider"></div>
@@ -233,7 +239,7 @@
           <h3>No bookmarks found</h3>
           <p>Import your existing Chrome / Brave bookmarks in seconds or add one manually.</p>
           <div style="display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin-top: 10px;">
-            <button id="btn-empty-import" class="primary-btn sm">📥 Import Chrome Bookmarks</button>
+            <button id="btn-empty-import" class="primary-btn sm">Import Chrome Bookmarks</button>
             <button id="btn-empty-add" class="ghost-btn sm">+ Add Manually</button>
           </div>
         </div>
@@ -266,11 +272,10 @@
       </div>
       <button id="btn-close-customizer" class="close-icon-btn" title="Close Customizer">&times;</button>
     </div>
-
     <div class="drawer-body">
       <!-- THEMES SELECTION -->
       <section class="drawer-section">
-        <h3>🎨 Color Themes</h3>
+        <h3>Color Themes</h3>
         <div class="theme-options-grid">
           <button class="theme-card active" data-set-theme="midnight">
             <div class="theme-preview midnight-preview"></div>
@@ -329,7 +334,7 @@
 
       <!-- WALLPAPER STUDIO -->
       <section class="drawer-section">
-        <h3>🖼️ Wallpapers</h3>
+        <h3>Wallpapers</h3>
         <p class="section-sub">Choose a preset or upload any image from your PC</p>
         
         <div class="wallpaper-presets-grid">
@@ -429,7 +434,7 @@
 
       <!-- SEARCH ENGINES SECTION -->
       <section class="drawer-section">
-        <h3>🔍 Search Engines</h3>
+        <h3>Search Engines</h3>
         <p class="section-sub">
           Google is the default search engine. Switch instantly, add custom search engines, or remove any you don't need.
         </p>
@@ -452,14 +457,14 @@
 
       <!-- BROWSER SYNC & SHORTCUT SECTION -->
       <section class="drawer-section">
-        <h3>🔄 Browser Sync & Shortcuts</h3>
+        <h3>Browser Sync & Shortcuts</h3>
         <p class="section-sub">
           Sync bookmarks across all your devices for free using native Brave / Chrome sync.
         </p>
         <div style="background: var(--bg-glass); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 1.1rem;">⚡</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-color); flex-shrink: 0;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
               <div>
                 <strong style="font-size: 0.82rem; color: var(--text-primary); display: block;">Quick Hook Shortcut</strong>
                 <span style="font-size: 0.72rem; color: var(--text-muted);">Save active tab without conflicts</span>
@@ -471,7 +476,7 @@
             Press on any tab to save. Opens Quick Menu with <kbd style="background: rgba(255,255,255,0.08); padding: 1px 4px; border-radius: 4px; font-family: var(--font-mono);">Alt+Shift+H</kbd>.
           </div>
           <button type="button" id="btn-configure-shortcuts" class="ghost-btn sm" style="width: 100%; justify-content: center; gap: 6px; font-size: 0.72rem; padding: 5px 8px;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
             <span>Customize Shortcuts in Browser</span>
           </button>
         </div>
@@ -487,7 +492,7 @@
 
       <!-- DISPLAY & LAYOUT CONTROLS -->
       <section class="drawer-section">
-        <h3>🗂️ Display & Layout View</h3>
+        <h3>Display & Layout View</h3>
         <p class="section-sub">
           Switch bookmark layout view or toggle privacy screen blur.
         </p>
@@ -515,7 +520,7 @@
         </button>
 
         <!-- Dedicated Top Sites Visibility Row -->
-        <div class="drawer-toggle-row" style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-glass); border: 1px solid var(--border-color); border-radius: 10px; padding: 10px 12px;">
+        <div class="drawer-toggle-row" style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-glass); border: 1px solid var(--border-color); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;">
           <div>
             <strong style="font-size: 0.82rem; color: var(--text-primary); display: block;">Top Sites / Squircles</strong>
             <span style="font-size: 0.72rem; color: var(--text-muted);">Show or hide app tiles below search</span>
@@ -525,11 +530,33 @@
             <span id="label-top-sites-vis">Show</span>
           </button>
         </div>
+
+        <div id="drawer-top-sites-restore-row" style="display: none; align-items: center; justify-content: space-between; background: var(--bg-glass); border: 1px solid var(--border-color); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px;">
+          <div>
+            <strong style="font-size: 0.8rem; color: var(--text-primary); display: block;">Removed App Tiles</strong>
+            <span style="font-size: 0.7rem; color: var(--text-muted);" id="drawer-top-sites-restore-count">0 hidden</span>
+          </div>
+          <button type="button" id="btn-drawer-restore-top-sites" class="ghost-btn xs" style="padding: 4px 10px; font-weight: 600;">
+            Restore All
+          </button>
+        </div>
+
+        <!-- Dedicated Time Format Toggle Row (12h vs 24h) -->
+        <div class="drawer-toggle-row" style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-glass); border: 1px solid var(--border-color); border-radius: 10px; padding: 10px 12px;">
+          <div>
+            <strong style="font-size: 0.82rem; color: var(--text-primary); display: block;">Time Format</strong>
+            <span style="font-size: 0.72rem; color: var(--text-muted);">12-hour (AM/PM) or 24-hour clock</span>
+          </div>
+          <div class="segmented-pill" id="time-format-pill">
+            <button type="button" id="btn-time-12" class="segmented-btn" data-format="12">12 hr</button>
+            <button type="button" id="btn-time-24" class="segmented-btn active" data-format="24">24 hr</button>
+          </div>
+        </div>
       </section>
 
       <!-- PREFERENCES & BACKUP -->
       <section class="drawer-section">
-        <h3>⚙️ Database & Bookmarks Backup</h3>
+        <h3>Database & Bookmarks Backup</h3>
         <p class="section-sub">
           Import from browser, backup to file, or auto-organize your bookmarks.
         </p>
@@ -546,7 +573,8 @@
               <input type="file" id="import-file-input" accept=".json,.html" class="hidden">
             </label>
             <button id="btn-drawer-auto-categorize" class="ghost-btn sm" style="flex: 1; justify-content: center; gap: 6px;">
-              <span>🪄 Auto-Sort</span>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+              <span>Auto-Sort</span>
             </button>
           </div>
 
@@ -560,7 +588,7 @@
 
       <!-- SUPPORT & BUG REPORT -->
       <section class="drawer-section">
-        <h3>💬 Help & Bug Report</h3>
+        <h3>Help & Bug Report</h3>
         <p class="section-sub">
           Found an issue or have a feature idea? Let us know!
         </p>
@@ -683,10 +711,10 @@
         <div class="form-group">
           <label for="bug-type">Feedback Type</label>
           <select id="bug-type">
-            <option value="🐛 Bug Report">🐛 Bug Report (Something is broken)</option>
-            <option value="💡 Feature Request">💡 Feature Request (Idea or suggestion)</option>
-            <option value="⚡ Performance Issue">⚡ Performance Issue (Lag or slow load)</option>
-            <option value="💬 General Feedback">💬 General Feedback</option>
+            <option value="Bug Report">Bug Report (Something is broken)</option>
+            <option value="Feature Request">Feature Request (Idea or suggestion)</option>
+            <option value="Performance Issue">Performance Issue (Lag or slow load)</option>
+            <option value="General Feedback">General Feedback</option>
           </select>
         </div>
 
@@ -707,7 +735,7 @@
 
         <div class="modal-actions" style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px;">
           <button type="button" id="btn-cancel-bug-modal" class="ghost-btn">Cancel</button>
-          <button type="button" id="btn-copy-diagnostics" class="ghost-btn sm" title="Copy diagnostic details to clipboard">📋 Copy Info</button>
+          <button type="button" id="btn-copy-diagnostics" class="ghost-btn sm" title="Copy diagnostic details to clipboard">Copy Info</button>
           <button type="submit" class="primary-btn">Submit Report</button>
         </div>
       </form>

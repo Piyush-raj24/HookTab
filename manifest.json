@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "HookTab - Visual Bookmarks & Dashboard",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "High-performance visual dashboard for Chromium & Brave with drag-and-drop boards, smart categorization, multi-engine search, themes, and instant quick-save.",
   "permissions": [
     "storage",

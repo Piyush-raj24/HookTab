@@ -12,8 +12,6 @@
 
 ## Features at a Glance
 
-* **Google Keep-Style Grid & Drag Movability**: Note cards with **PINNED** and **OTHERS** sections, Keep pushpin anchors, category chips, and fluid drag-and-drop movability with 3D tilt and magnetic drop feedback.
-* **Lumilist Board View (Kanban Columns)**: Switch to a luminous multi-column board view. Drag cards across boards to re-categorize them in real-time, with 1-click **`+ Add Board`** to create new custom lists.
 * **Multiple Pages (Work, Personal, Projects)**: Create dedicated workspaces for *Work*, *Personal*, *Projects*, or custom clients. Switch between them instantly with single-click page pills.
 * **1-Stroke Quick Hook (`Alt+H`)**: Hook any webpage into your dashboard instantly without opening a dialog or triggering browser shortcut collisions. Confirmation badge flashes on the extension icon.
 * **Smart Auto-Categorization**: 100% client-side topic engine that automatically classifies bookmarks into *AI & LLMs*, *Dev & Code*, *Productivity*, *Social & Chat*, *Media & Video*, *News & Reading*, *Shopping & Finance*, and *Design*.

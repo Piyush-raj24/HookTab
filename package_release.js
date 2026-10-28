@@ -75,7 +75,7 @@ if (fs.existsSync(zipPath)) {
 }
 
 try {
-  const psCmd = `powershell -Command "Compress-Archive -Path '${stagingDir}\\*' -DestinationPath '${zipPath}' -Force"`;
+  const psCmd = `powershell -NoProfile -Command "$ProgressPreference = 'SilentlyContinue'; Compress-Archive -Path '${stagingDir}\\*' -DestinationPath '${zipPath}' -Force"`;
   execSync(psCmd, { stdio: 'inherit' });
   const stat = fs.statSync(zipPath);
   const sizeMb = (stat.size / 1024 / 1024).toFixed(2);

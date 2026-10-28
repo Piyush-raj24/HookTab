@@ -7,17 +7,18 @@
 
   let currentTab = null;
   let allBookmarks = [];
+  let activePage = 'Personal';
 
   const dom = {
-    currentFavicon: document.getElementById('current-favicon'),
-    currentTitle: document.getElementById('current-title'),
-    currentUrl: document.getElementById('current-url'),
-    quickCategory: document.getElementById('quick-category'),
-    btnSaveCurrent: document.getElementById('btn-save-current'),
-    btnOpenDashboard: document.getElementById('btn-open-dashboard'),
-    popupSearch: document.getElementById('popup-search'),
-    popupResults: document.getElementById('popup-results'),
-    popupToast: document.getElementById('popup-toast')
+    currentFavicon: null,
+    currentTitle: null,
+    currentUrl: null,
+    quickCategory: null,
+    btnSaveCurrent: null,
+    btnOpenDashboard: null,
+    popupSearch: null,
+    popupResults: null,
+    popupToast: null
   };
 
   // Safe storage helper
@@ -47,107 +48,130 @@
     }
   }
 
-  // 1. Fetch Active Tab Information
-  if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.query) {
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-      if (tabs && tabs[0]) {
-        currentTab = tabs[0];
-        dom.currentTitle.textContent = currentTab.title || 'Current Webpage';
-        dom.currentUrl.textContent = currentTab.url || '';
-        if (currentTab.favIconUrl) {
-          dom.currentFavicon.src = currentTab.favIconUrl;
-        } else {
-          try {
-            const host = new URL(currentTab.url).hostname;
-            dom.currentFavicon.src = `https://www.google.com/s2/favicons?domain=${host}&sz=64`;
-          } catch(e) {}
+  function initPopup() {
+    // Populate DOM elements safely
+    dom.currentFavicon = document.getElementById('current-favicon');
+    dom.currentTitle = document.getElementById('current-title');
+    dom.currentUrl = document.getElementById('current-url');
+    dom.quickCategory = document.getElementById('quick-category');
+    dom.btnSaveCurrent = document.getElementById('btn-save-current');
+    dom.btnOpenDashboard = document.getElementById('btn-open-dashboard');
+    dom.popupSearch = document.getElementById('popup-search');
+    dom.popupResults = document.getElementById('popup-results');
+    dom.popupToast = document.getElementById('popup-toast');
+
+    // 1. Fetch Active Tab Information
+    if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.query) {
+      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+        if (tabs && tabs[0]) {
+          currentTab = tabs[0];
+          if (dom.currentTitle) {
+            dom.currentTitle.textContent = currentTab.title || 'Current Webpage';
+          }
+          if (dom.currentUrl) {
+            dom.currentUrl.textContent = currentTab.url || '';
+          }
+          if (dom.currentFavicon) {
+            if (currentTab.favIconUrl) {
+              dom.currentFavicon.src = currentTab.favIconUrl;
+            } else {
+              try {
+                const host = new URL(currentTab.url).hostname;
+                dom.currentFavicon.src = `https://www.google.com/s2/favicons?domain=${host}&sz=64`;
+              } catch(e) {}
+            }
+          }
+
+          // Default category to General
+          if (dom.quickCategory) {
+            dom.quickCategory.value = 'General';
+          }
         }
-
-        // Auto-select detected category
-        const detectedCat = detectCategory(currentTab.url, currentTab.title);
-        if (dom.quickCategory) {
-          dom.quickCategory.value = detectedCat;
-        }
-      }
-    });
-  } else {
-    dom.currentTitle.textContent = 'Active Browser Tab';
-    dom.currentUrl.textContent = window.location.href;
-  }
-
-  let activePage = 'Personal';
-
-  // 2. Load Bookmarks for search & additions
-  getStorage(['bookmarks', 'activePage'], (data) => {
-    allBookmarks = data.bookmarks || [];
-    if (data.activePage) activePage = data.activePage;
-    renderResults(allBookmarks.slice(0, 5));
-  });
-
-  // 3. Save Active Tab
-  dom.btnSaveCurrent.addEventListener('click', () => {
-    if (!currentTab || !currentTab.url || !isSafeUrl(currentTab.url)) {
-      showToast('Cannot save invalid or internal tab');
-      return;
-    }
-
-    const newBookmark = {
-      id: 'tab-' + Date.now(),
-      title: currentTab.title || 'Saved Page',
-      url: currentTab.url,
-      page: activePage || 'Personal',
-      category: dom.quickCategory.value,
-      tags: 'quick-save',
-      favorite: false,
-      visits: 1
-    };
-
-    allBookmarks.unshift(newBookmark);
-    setStorage({ bookmarks: allBookmarks }, () => {
-      // Sync to native bookmarks for cross-device Brave / Chrome sync
-      if (typeof chrome !== 'undefined' && chrome.bookmarks && chrome.bookmarks.create) {
-        chrome.bookmarks.create({
-          title: newBookmark.title,
-          url: newBookmark.url
-        }, () => {});
-      }
-      showToast('Saved to ' + newBookmark.category + '!');
-      renderResults(allBookmarks.slice(0, 5));
-    });
-  });
-
-  // 4. Open Dashboard
-  dom.btnOpenDashboard.addEventListener('click', () => {
-    if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
-      chrome.tabs.create({ url: chrome.runtime.getURL('newtab.html') });
+      });
     } else {
-      window.open('newtab.html', '_blank');
+      if (dom.currentTitle) dom.currentTitle.textContent = 'Active Browser Tab';
+      if (dom.currentUrl) dom.currentUrl.textContent = window.location.href;
     }
-  });
 
-  const shortcutKbd = document.getElementById('popup-shortcut-kbd');
-  if (shortcutKbd) {
-    shortcutKbd.addEventListener('click', () => {
-      if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
-        chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
-      }
-    });
-  }
-
-  // 5. Search existing bookmarks
-  dom.popupSearch.addEventListener('input', (e) => {
-    const q = e.target.value.toLowerCase().trim();
-    if (!q) {
+    // 2. Load Bookmarks for search & additions
+    getStorage(['bookmarks', 'activePage'], (data) => {
+      allBookmarks = data.bookmarks || [];
+      if (data.activePage) activePage = data.activePage;
       renderResults(allBookmarks.slice(0, 5));
-      return;
+    });
+
+    // 3. Save Active Tab
+    if (dom.btnSaveCurrent) {
+      dom.btnSaveCurrent.addEventListener('click', () => {
+        if (!currentTab || !currentTab.url || !isSafeUrl(currentTab.url)) {
+          showToast('Cannot save invalid or internal tab');
+          return;
+        }
+
+        const cat = (dom.quickCategory && dom.quickCategory.value) || 'General';
+        const newBookmark = {
+          id: 'tab-' + Date.now(),
+          title: currentTab.title || 'Saved Page',
+          url: currentTab.url,
+          page: activePage || 'Personal',
+          category: cat,
+          tags: 'quick-save',
+          favorite: false,
+          visits: 1
+        };
+
+        allBookmarks.unshift(newBookmark);
+        setStorage({ bookmarks: allBookmarks }, () => {
+          // Sync to native bookmarks for cross-device Brave / Chrome sync
+          if (typeof chrome !== 'undefined' && chrome.bookmarks && chrome.bookmarks.create) {
+            chrome.bookmarks.create({
+              title: newBookmark.title,
+              url: newBookmark.url
+            }, () => {});
+          }
+          showToast('Saved to ' + newBookmark.category + '!');
+          renderResults(allBookmarks.slice(0, 5));
+        });
+      });
     }
-    const matches = allBookmarks.filter(b => 
-      b.title.toLowerCase().includes(q) || 
-      b.url.toLowerCase().includes(q) ||
-      (b.category && b.category.toLowerCase().includes(q))
-    ).slice(0, 8);
-    renderResults(matches);
-  });
+
+    // 4. Open Dashboard
+    if (dom.btnOpenDashboard) {
+      dom.btnOpenDashboard.addEventListener('click', () => {
+        if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
+          chrome.tabs.create({ url: chrome.runtime.getURL('newtab.html') });
+        } else {
+          window.open('newtab.html', '_blank');
+        }
+      });
+    }
+
+    const shortcutKbd = document.getElementById('popup-shortcut-kbd');
+    if (shortcutKbd) {
+      shortcutKbd.addEventListener('click', () => {
+        if (typeof chrome !== 'undefined' && chrome.tabs && chrome.tabs.create) {
+          chrome.tabs.create({ url: 'chrome://extensions/shortcuts' });
+        }
+      });
+    }
+
+    // 5. Search existing bookmarks
+    if (dom.popupSearch) {
+      dom.popupSearch.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase().trim();
+        if (!q) {
+          renderResults(allBookmarks.slice(0, 5));
+          return;
+        }
+        const matches = allBookmarks.filter(b => 
+          (b.title && b.title.toLowerCase().includes(q)) || 
+          (b.url && b.url.toLowerCase().includes(q)) ||
+          (b.category && b.category.toLowerCase().includes(q))
+        ).slice(0, 8);
+        renderResults(matches);
+      });
+    }
+  }
 
   function escapeHtml(str) {
     if (!str) return '';
@@ -174,6 +198,7 @@
   }
 
   function renderResults(list) {
+    if (!dom.popupResults) return;
     dom.popupResults.innerHTML = '';
     list.forEach(b => {
       if (!b || !b.url || !isSafeUrl(b.url)) return;
@@ -197,72 +222,23 @@
   }
 
   function showToast(msg) {
+    if (!dom.popupToast) return;
     dom.popupToast.textContent = msg;
     dom.popupToast.classList.remove('hidden');
     setTimeout(() => {
-      dom.popupToast.classList.add('hidden');
+      if (dom.popupToast) dom.popupToast.classList.add('hidden');
     }, 2000);
   }
 
-  // Intelligent Topic & Category Classifier
+  // Category helper (defaults to General)
   function detectCategory(rawUrl, rawTitle) {
-    const url = (rawUrl || '').toLowerCase();
-    const title = (rawTitle || '').toLowerCase();
-    let hostname = '';
-    try {
-      hostname = new URL(rawUrl.startsWith('http') ? rawUrl : 'https://' + rawUrl).hostname.replace(/^www\./, '');
-    } catch (e) {
-      hostname = url;
-    }
-
-    const aiDomains = ['openai.com', 'chatgpt.com', 'anthropic.com', 'claude.ai', 'huggingface.co', 'perplexity.ai', 'deepmind.google', 'midjourney.com', 'cursor.com', 'v0.dev', 'poe.com', 'replicate.com', 'mistral.ai', 'groq.com', 'elevenlabs.io', 'runwayml.com', 'stability.ai', 'cohere.com', 'ollama.com', 'claude.com'];
-    const aiKeywords = ['ai', 'llm', 'gpt', 'chatgpt', 'claude', 'gemini', 'prompt', 'neural', 'deep learning', 'machine learning', 'diffusion', 'copilot', 'agent'];
-    if (aiDomains.some(d => hostname.includes(d)) || aiKeywords.some(k => new RegExp('\\b' + k + '\\b', 'i').test(title) || url.includes('/' + k))) {
-      return 'AI & LLMs';
-    }
-
-    const devDomains = ['github.com', 'gitlab.com', 'bitbucket.org', 'stackoverflow.com', 'stackexchange.com', 'npmjs.com', 'npmjs.org', 'pypi.org', 'developer.mozilla.org', 'w3schools.com', 'docker.com', 'vercel.com', 'netlify.com', 'aws.amazon.com', 'console.cloud.google.com', 'firebase.google.com', 'react.dev', 'vuejs.org', 'angular.dev', 'nextjs.org', 'typescriptlang.org', 'python.org', 'rust-lang.org', 'golang.org', 'leetcode.com', 'codepen.io', 'jsfiddle.net', 'codesandbox.io', 'replit.com', 'geeksforgeeks.org', 'css-tricks.com', 'dev.to', 'gist.github.com'];
-    const devKeywords = ['github', 'api', 'repository', 'sdk', 'documentation', 'docs', 'compiler', 'debug', 'frontend', 'backend', 'fullstack', 'database', 'sql', 'json', 'webhook', 'cli'];
-    if (devDomains.some(d => hostname.includes(d)) || devKeywords.some(k => new RegExp('\\b' + k + '\\b', 'i').test(title) || url.includes('/' + k))) {
-      return 'Dev & Code';
-    }
-
-    const socialDomains = ['x.com', 'twitter.com', 'reddit.com', 'discord.com', 'telegram.org', 't.me', 'slack.com', 'linkedin.com', 'instagram.com', 'threads.net', 'facebook.com', 'whatsapp.com', 'tiktok.com', 'mastodon.social', 'bsky.app', 'pinterest.com', 'snapchat.com', 'tumblr.com'];
-    const socialKeywords = ['social', 'community', 'forum', 'discussion', 'subreddit', 'tweet', 'feed'];
-    if (socialDomains.some(d => hostname.includes(d)) || socialKeywords.some(k => new RegExp('\\b' + k + '\\b', 'i').test(title))) {
-      return 'Social & Chat';
-    }
-
-    const prodDomains = ['notion.so', 'figma.com', 'trello.com', 'linear.app', 'jira.atlassian.com', 'atlassian.com', 'canva.com', 'docs.google.com', 'sheets.google.com', 'drive.google.com', 'slides.google.com', 'miro.com', 'airtable.com', 'zoom.us', 'cal.com', 'calendly.com', 'asana.com', 'loom.com', 'coda.io', 'clickup.com', 'monday.com', 'basecamp.com', 'evernote.com', 'todoist.com', 'dropbox.com'];
-    const prodKeywords = ['workspace', 'task', 'project', 'kanban', 'spreadsheet', 'tracker', 'calendar', 'meeting', 'crm', 'workflow'];
-    if (prodDomains.some(d => hostname.includes(d)) || prodKeywords.some(k => new RegExp('\\b' + k + '\\b', 'i').test(title))) {
-      return 'Productivity';
-    }
-
-    const mediaDomains = ['youtube.com', 'youtu.be', 'netflix.com', 'spotify.com', 'twitch.tv', 'vimeo.com', 'primevideo.com', 'soundcloud.com', 'disneyplus.com', 'hulu.com', 'hbomax.com', 'music.apple.com', 'podcasts.google.com', 'dailymotion.com', 'crunchyroll.com', 'bandcamp.com', 'imdb.com'];
-    const mediaKeywords = ['watch', 'video', 'movie', 'film', 'music', 'album', 'podcast', 'stream', 'episode', 'series', 'track'];
-    if (mediaDomains.some(d => hostname.includes(d)) || mediaKeywords.some(k => new RegExp('\\b' + k + '\\b', 'i').test(title))) {
-      return 'Media & Video';
-    }
-
-    const newsDomains = ['medium.com', 'substack.com', 'news.ycombinator.com', 'theverge.com', 'wired.com', 'techcrunch.com', 'bloomberg.com', 'bbc.com', 'reuters.com', 'nytimes.com', 'theguardian.com', 'arstechnica.com', 'engadget.com', 'mashable.com', 'forbes.com', 'wsj.com', 'hackernews.com', 'slashdot.org'];
-    const newsKeywords = ['news', 'article', 'journal', 'headline', 'daily', 'editorial', 'newsletter', 'report', 'digest'];
-    if (newsDomains.some(d => hostname.includes(d)) || newsKeywords.some(k => new RegExp('\\b' + k + '\\b', 'i').test(title))) {
-      return 'News & Reading';
-    }
-
-    const shopDomains = ['amazon.com', 'ebay.com', 'walmart.com', 'aliexpress.com', 'etsy.com', 'target.com', 'stripe.com', 'paypal.com', 'binance.com', 'coinbase.com', 'robinhood.com', 'tradingview.com', 'investing.com', 'coingecko.com', 'coinmarketcap.com', 'chase.com', 'bankofamerica.com', 'shopify.com'];
-    const shopKeywords = ['shop', 'store', 'cart', 'buy', 'checkout', 'price', 'deals', 'discount', 'crypto', 'bitcoin', 'ethereum', 'stock', 'forex', 'portfolio', 'finance', 'banking'];
-    if (shopDomains.some(d => hostname.includes(d)) || shopKeywords.some(k => new RegExp('\\b' + k + '\\b', 'i').test(title))) {
-      return 'Shopping & Finance';
-    }
-
-    const designDomains = ['dribbble.com', 'behance.net', 'unsplash.com', 'pexels.com', 'fontawesome.com', 'icons8.com', 'coolors.co', 'svgrepo.com', 'flaticon.com', 'freepik.com', 'fonts.google.com', 'colorhunt.co', 'typewolf.com', 'mobbin.com', 'awwwards.com'];
-    const designKeywords = ['design', 'ui', 'ux', 'vector', 'palette', 'typography', 'font', 'icon', 'illustration', 'mockup', 'artwork', 'graphic'];
-    if (designDomains.some(d => hostname.includes(d)) || designKeywords.some(k => new RegExp('\\b' + k + '\\b', 'i').test(title))) {
-      return 'Design & Creative';
-    }
-
     return 'General';
+  }
+
+  // Safe launch after DOMContentLoaded
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initPopup);
+  } else {
+    initPopup();
   }
 })();

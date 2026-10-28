@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
@@ -7,14 +8,18 @@
   <!-- Google Fonts: Outfit & Inter for ultra-clean modern typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="newtab.css">
   <link rel="icon" type="image/png" href="assets/icon-48.png">
 </head>
-<body data-theme="midnight" data-layout="cards">
+
+<body data-theme="midnight" data-layout="board">
   <!-- Dynamic Background Layer -->
   <div id="bg-container" class="bg-container">
     <div id="bg-image" class="bg-image"></div>
+    <video id="bg-video" class="bg-video hidden" autoplay loop muted playsinline></video>
     <canvas id="live-canvas" class="live-canvas hidden"></canvas>
     <div id="bg-overlay" class="bg-overlay"></div>
   </div>
@@ -27,20 +32,25 @@
         <div class="brand-badge" title="HookTab Visual Dashboard">
           <span class="brand-title">HookTab</span>
         </div>
-        <button type="button" id="btn-sync-brave" class="ghost-btn sm" title="Two-Way Browser Sync (Brave Sync / Chrome Sync)">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+        <button type="button" id="btn-sync-brave" class="ghost-btn sm"
+          title="Two-Way Browser Sync (Brave Sync / Chrome Sync)">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+          </svg>
           <span>Browser Sync</span>
         </button>
       </div>
 
       <!-- Time & Mini Weather in Center -->
       <div class="nav-center">
-        <div id="time-widget" class="time-widget" role="button" tabindex="0" title="Clock • Click to toggle 12h / 24h format">
+        <div id="time-widget" class="time-widget" role="button" tabindex="0"
+          title="Clock • Click to toggle 12h / 24h format">
           <div id="clock-display" class="clock-display">00:00</div>
           <span id="date-display" class="date-text">Loading date...</span>
         </div>
         <!-- Mini Privacy-Friendly Weather Widget -->
-        <div id="weather-widget" class="weather-widget" role="button" tabindex="0" title="Live Weather • Click to switch °C / °F">
+        <div id="weather-widget" class="weather-widget" role="button" tabindex="0"
+          title="Live Weather • Click to switch °C / °F">
           <span id="weather-icon" class="weather-icon">⛅</span>
           <div class="weather-details">
             <div class="weather-temp-row">
@@ -56,18 +66,40 @@
       <div class="nav-right">
         <!-- Add Bookmark Button -->
         <button id="btn-add-bookmark" class="ghost-btn sm" title="Add Bookmark (Alt+H)">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
           <span>Bookmark</span>
         </button>
 
         <!-- Quick Notes Button -->
         <button id="btn-notes-toggle" class="ghost-btn icon-only" title="Quick Notes Scratchpad">
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+          </svg>
+        </button>
+
+        <!-- Privacy Mode Eye Button (In between Scratchpad & Settings) -->
+        <button id="btn-privacy-toggle" class="ghost-btn icon-only" title="Privacy Mode: Click to blur/hide bookmarks">
+          <svg class="privacy-icon-open" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+          <svg class="privacy-icon-closed hidden" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+            <line x1="1" y1="1" x2="23" y2="23" />
+          </svg>
         </button>
 
         <!-- Customizer Studio Drawer / Settings Button -->
         <button id="btn-open-customizer" class="ghost-btn icon-only" title="Settings, Themes & Tools">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
         </button>
       </div>
     </header>
@@ -77,7 +109,10 @@
       <!-- Privacy Mode Active Banner -->
       <div id="privacy-banner" class="privacy-banner hidden">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+          </svg>
           <span>Privacy Mode Active • Bookmarks are blurred for screen sharing (Hover card to peek)</span>
         </div>
         <button type="button" id="btn-exit-privacy">Turn Off</button>
@@ -88,13 +123,18 @@
         <div class="search-box-card">
           <!-- Engine Selector (Logo Only, No Text) -->
           <div class="engine-picker-wrap" id="engine-picker-wrap">
-            <button type="button" id="btn-engine-trigger" class="engine-icon-btn" title="Search Engine • Click to switch">
+            <button type="button" id="btn-engine-trigger" class="engine-icon-btn"
+              title="Search Engine • Click to switch">
               <span id="active-engine-icon" class="active-engine-icon">
                 <svg width="22" height="22" viewBox="0 0 48 48">
-                  <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-                  <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-                  <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-                  <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                  <path fill="#EA4335"
+                    d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
+                  <path fill="#4285F4"
+                    d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
+                  <path fill="#FBBC05"
+                    d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
+                  <path fill="#34A853"
+                    d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
                 </svg>
               </span>
             </button>
@@ -106,36 +146,45 @@
               <div class="engine-divider"></div>
               <!-- Dedicated Add Custom Search Engine Button -->
               <button type="button" class="engine-add-btn" id="btn-add-engine" title="Add New Search Engine">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
               </button>
             </div>
           </div>
 
           <!-- Main Input Field -->
           <form id="search-form" class="search-form" action="https://www.google.com/search" method="GET">
-            <input 
-              type="text" 
-              id="search-input" 
-              name="q" 
-              placeholder="Search Google or type URL... (Press / to focus)" 
-              autocomplete="off"
-              autofocus
-            />
+            <input type="text" id="search-input" name="q" placeholder="Search or enter URL"
+              autocomplete="off" spellcheck="false" autofocus />
             <button type="button" id="btn-clear-search" class="clear-search-btn hidden" title="Clear input">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
             </button>
             <button type="button" id="btn-voice-search" class="voice-search-btn" title="Voice Search">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" y1="19" x2="12" y2="23" />
+                <line x1="8" y1="23" x2="16" y2="23" />
+              </svg>
             </button>
             <button type="submit" class="submit-search-btn" title="Search">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
             </button>
           </form>
 
           <!-- Search Mode Toggle Pill: Google Web Search vs Bookmarks -->
           <div class="search-mode-pill" id="search-mode-pill" title="Toggle Search: Google Web or Bookmarks">
             <button type="button" id="mode-web" class="mode-btn active" title="Search Google / Web">Google</button>
-            <button type="button" id="mode-bookmarks" class="mode-btn" title="Search within Bookmarks">Bookmarks</button>
+            <button type="button" id="mode-bookmarks" class="mode-btn"
+              title="Search within Bookmarks">Bookmarks</button>
           </div>
         </div>
 
@@ -153,19 +202,19 @@
             <div id="top-sites-menu-popover" class="top-sites-popover hidden">
               <button type="button" class="popover-item" id="menu-add-site">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
-                  <rect x="3" y="3" width="18" height="18" rx="4"/>
-                  <line x1="12" y1="8" x2="12" y2="16"/>
-                  <line x1="8" y1="12" x2="16" y2="12"/>
+                  <rect x="3" y="3" width="18" height="18" rx="4" />
+                  <line x1="12" y1="8" x2="12" y2="16" />
+                  <line x1="8" y1="12" x2="16" y2="12" />
                 </svg>
                 <span>Add site</span>
               </button>
-              
+
               <button type="button" class="popover-item" id="menu-toggle-more">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
-                  <polyline points="15 3 21 3 21 9"/>
-                  <line x1="21" y1="3" x2="14" y2="10"/>
-                  <polyline points="9 21 3 21 3 15"/>
-                  <line x1="3" y1="21" x2="10" y2="14"/>
+                  <polyline points="15 3 21 3 21 9" />
+                  <line x1="21" y1="3" x2="14" y2="10" />
+                  <polyline points="9 21 3 21 3 15" />
+                  <line x1="3" y1="21" x2="10" y2="14" />
                 </svg>
                 <span id="label-toggle-more">Show more items</span>
               </button>
@@ -174,9 +223,9 @@
 
               <button type="button" class="popover-item" id="menu-toggle-frequent">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
-                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                  <polyline points="3 3 3 8 8 8"/>
-                  <polyline points="12 7 12 12 15 15"/>
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <polyline points="3 3 3 8 8 8" />
+                  <polyline points="12 7 12 12 15 15" />
                 </svg>
                 <span id="label-toggle-frequent">Show frequently visited</span>
               </button>
@@ -185,8 +234,8 @@
 
               <button type="button" class="popover-item" id="menu-restore-sites" style="display: none;">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
-                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-                  <polyline points="3 3 3 8 8 8"/>
+                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                  <polyline points="3 3 3 8 8 8" />
                 </svg>
                 <span>Restore removed sites</span>
               </button>
@@ -195,8 +244,9 @@
 
               <button type="button" class="popover-item" id="menu-hide-sites">
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">
-                  <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
-                  <line x1="1" y1="1" x2="23" y2="23"/>
+                  <path
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line x1="1" y1="1" x2="23" y2="23" />
                 </svg>
                 <span>Hide top sites</span>
               </button>
@@ -224,9 +274,20 @@
         </div>
 
         <!-- Infinite Scroll Sentinel & Load More Indicator -->
-        <div id="bookmarks-sentinel" class="bookmarks-sentinel hidden" style="text-align: center; padding: 18px 0; color: var(--text-muted); font-size: 0.8rem;">
+        <div id="bookmarks-sentinel" class="bookmarks-sentinel hidden"
+          style="text-align: center; padding: 18px 0; color: var(--text-muted); font-size: 0.8rem;">
           <div id="sentinel-loader" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-            <svg class="spin-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
+            <svg class="spin-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+              stroke-width="2">
+              <line x1="12" y1="2" x2="12" y2="6" />
+              <line x1="12" y1="18" x2="12" y2="22" />
+              <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
+              <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
+              <line x1="2" y1="12" x2="6" y2="12" />
+              <line x1="18" y1="12" x2="22" y2="12" />
+              <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
+              <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
+            </svg>
             <span id="sentinel-text">Loading more bookmarks...</span>
           </div>
         </div>
@@ -234,7 +295,10 @@
         <!-- Empty State (Shown when search has no matches) -->
         <div id="empty-state" class="empty-state hidden">
           <div class="empty-icon">
-            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
           </div>
           <h3>No bookmarks found</h3>
           <p>Import your existing Chrome / Brave bookmarks in seconds or add one manually.</p>
@@ -246,16 +310,28 @@
       </section>
     </main>
 
-    <!-- Quick Notes Scratchpad (Collapsible Floating Card) -->
+    <!-- Quick Notes Scratchpad (Collapsible Floating Sticky Note) -->
     <div id="notes-widget" class="notes-widget hidden">
-      <div class="widget-header">
+      <div class="widget-header" id="notes-widget-header"
+        title="Drag to move sticky note • Double-click to snap to corner">
         <div class="widget-title">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <svg class="notes-drag-dots" width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="8" cy="5" r="2" />
+            <circle cx="16" cy="5" r="2" />
+            <circle cx="8" cy="12" r="2" />
+            <circle cx="16" cy="12" r="2" />
+            <circle cx="8" cy="19" r="2" />
+            <circle cx="16" cy="19" r="2" />
+          </svg>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+            <polyline points="14 2 14 8 20 8" />
+          </svg>
           <span>Quick Scratchpad</span>
         </div>
-        <button id="btn-close-notes" class="close-icon-btn">&times;</button>
+        <button type="button" id="btn-close-notes" class="close-icon-btn" title="Close sticky note">&times;</button>
       </div>
-      <textarea id="notes-textarea" placeholder="Jot down quick thoughts, links, or to-dos... (Saved automatically)"></textarea>
+      <textarea id="notes-textarea" placeholder="Notes..." spellcheck="false"></textarea>
       <div class="widget-footer">
         <span id="notes-status" class="notes-status">Saved</span>
         <button id="btn-clear-notes" class="ghost-btn xs">Clear</button>
@@ -263,342 +339,503 @@
     </div>
   </div>
 
-  <!-- THEME & WALLPAPER CUSTOMIZATION DRAWER -->
-  <aside id="customizer-drawer" class="customizer-drawer hidden">
-    <div class="drawer-header">
-      <div class="drawer-title-wrap">
-        <h2>Appearance & Studio</h2>
-        <p>Personalize your Brave dashboard</p>
-      </div>
-      <button id="btn-close-customizer" class="close-icon-btn" title="Close Customizer">&times;</button>
-    </div>
-    <div class="drawer-body">
-      <!-- THEMES SELECTION -->
-      <section class="drawer-section">
-        <h3>Color Themes</h3>
-        <div class="theme-options-grid">
-          <button class="theme-card active" data-set-theme="midnight">
-            <div class="theme-preview midnight-preview"></div>
-            <span>Midnight Obsidian</span>
-          </button>
-          <button class="theme-card" data-set-theme="glass">
-            <div class="theme-preview glass-preview"></div>
-            <span>Frosted Glass</span>
-          </button>
-          <button class="theme-card" data-set-theme="cyberpunk">
-            <div class="theme-preview cyberpunk-preview"></div>
-            <span>Cyberpunk Neon</span>
-          </button>
-          <button class="theme-card" data-set-theme="sunset">
-            <div class="theme-preview sunset-preview"></div>
-            <span>Sunset Amber</span>
-          </button>
-          <button class="theme-card" data-set-theme="emerald">
-            <div class="theme-preview emerald-preview"></div>
-            <span>Nord Emerald</span>
-          </button>
-          <button class="theme-card" data-set-theme="cosmos">
-            <div class="theme-preview cosmos-preview"></div>
-            <span>Deep Cosmos</span>
-          </button>
-          <button class="theme-card" data-set-theme="minimal-light">
-            <div class="theme-preview light-preview"></div>
-            <span>Minimal Light</span>
-          </button>
+  <!-- SETTINGS DIALOG (Two-Panel: Left Nav + Right Content) -->
+  <div id="settings-modal" class="settings-modal-backdrop hidden" role="dialog" aria-modal="true"
+    aria-label="Customize Dashboard">
+    <div class="settings-modal">
+      <!-- LEFT SIDEBAR NAV -->
+      <nav class="settings-nav">
+        <div class="settings-nav-header">
+          <h2>Customize</h2>
         </div>
+        <ul class="settings-nav-list">
+          <li>
+            <button type="button" class="settings-nav-item active" data-panel="wallpaper">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <circle cx="8.5" cy="8.5" r="1.5" />
+                <polyline points="21 15 16 10 5 21" />
+              </svg>
+              <span>Background Image</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="settings-nav-item" data-panel="appearance">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3" />
+                <path
+                  d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" />
+              </svg>
+              <span>Themes &amp; Colors</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="settings-nav-item" data-panel="search">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <span>Search</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="settings-nav-item" data-panel="topsites">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7" rx="1" />
+                <rect x="14" y="3" width="7" height="7" rx="1" />
+                <rect x="3" y="14" width="7" height="7" rx="1" />
+                <rect x="14" y="14" width="7" height="7" rx="1" />
+              </svg>
+              <span>Top Sites</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="settings-nav-item" data-panel="clock">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+              <span>Clock</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="settings-nav-item" data-panel="bookmarks">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <line x1="3" y1="9" x2="21" y2="9" />
+                <line x1="9" y1="21" x2="9" y2="9" />
+              </svg>
+              <span>Bookmarks</span>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="settings-nav-item" data-panel="feedback">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v4" />
+                <path d="M12 16h.01" />
+              </svg>
+              <span>Feedback</span>
+            </button>
+          </li>
+        </ul>
+      </nav>
 
-        <!-- Custom Accent Gradient Picker -->
-        <div class="accent-gradient-wrap">
-          <div class="accent-gradient-header">
-            <div>
-              <strong style="font-size: 0.82rem; color: var(--text-primary); display: block;">Custom Accent Gradient</strong>
-              <span style="font-size: 0.72rem; color: var(--text-muted);">Pick two colors to create your custom gradient</span>
-            </div>
-            <div id="gradient-preview-badge" class="gradient-preview-badge" title="Live Gradient Preview">HookTab</div>
-          </div>
-          <div class="dual-accent-row">
-            <div class="color-input-wrap">
-              <span class="color-picker-label">Color 1</span>
-              <input type="color" id="accent-color-input" value="#6366f1" title="Primary Accent Color">
-              <span id="accent-hex-label">#6366F1</span>
-            </div>
-            <div class="gradient-connector">✦</div>
-            <div class="color-input-wrap">
-              <span class="color-picker-label">Color 2</span>
-              <input type="color" id="accent-color-2-input" value="#ec4899" title="Secondary Gradient Color">
-              <span id="accent-hex-2-label">#EC4899</span>
-            </div>
-          </div>
-        </div>
-      </section>
+      <!-- RIGHT CONTENT AREA -->
+      <div class="settings-content">
+        <!-- Close Button -->
+        <button id="btn-close-settings" class="settings-close-btn" title="Close Settings"
+          aria-label="Close Settings">&times;</button>
 
-      <!-- WALLPAPER STUDIO -->
-      <section class="drawer-section">
-        <h3>Wallpapers</h3>
-        <p class="section-sub">Choose a preset or upload any image from your PC</p>
-        
-        <div class="wallpaper-presets-grid">
-          <div class="wallpaper-card active" data-wp="aurora" title="Aurora Nebula (AI Generated)">
-            <img src="assets/wallpapers/aurora.jpg" alt="Aurora" loading="lazy">
-            <span class="wp-label">Aurora Nebula</span>
+        <!-- PANEL: Background Image (Wallpaper) -->
+        <div class="settings-panel active" id="panel-wallpaper">
+          <div class="settings-panel-header">
+            <h3>Background Image</h3>
+            <p>Choose a preset background, animated visual, or upload your own image</p>
           </div>
-          <div class="wallpaper-card" data-wp="sunset" title="Warm Desert Sunset">
-            <img src="assets/wallpapers/sunset.jpg" alt="Sunset" loading="lazy">
-            <span class="wp-label">Dune Sunset</span>
-          </div>
-          <div class="wallpaper-card" data-wp="cyberpunk" title="Cyberpunk City Night">
-            <img src="assets/wallpapers/cyberpunk.jpg" alt="Cyberpunk" loading="lazy">
-            <span class="wp-label">Cyberpunk City</span>
-          </div>
-          <div class="wallpaper-card" data-wp="gradient-cosmic" title="Cosmic Gradient">
-            <div class="wp-gradient gradient-cosmic"></div>
-            <span class="wp-label">Cosmic Mesh</span>
-          </div>
-          <div class="wallpaper-card" data-wp="gradient-sunset" title="Sunset Aura Gradient">
-            <div class="wp-gradient gradient-sunset"></div>
-            <span class="wp-label">Golden Glow</span>
-          </div>
-          <div class="wallpaper-card" data-wp="gradient-minimal" title="Obsidian Velvet">
-            <div class="wp-gradient gradient-minimal gradient-obsidian"></div>
-            <span class="wp-label">Dark Velvet</span>
-          </div>
-        </div>
 
-        <!-- LIVE ANIMATED WALLPAPERS -->
-        <div class="live-wallpaper-block">
-          <div class="live-wp-header">
-            <div class="live-wp-title">
-              <span class="live-dot-pulse"></span>
-              <strong>Live Animated Wallpapers</strong>
-            </div>
-            <span class="live-fps-pill">60 FPS • GPU</span>
-          </div>
-          <div class="wallpaper-presets-grid live-presets-grid">
-            <div class="wallpaper-card" data-wp="live-aurora" title="Flowing Northern Lights (Ambient Aurora)">
-              <div class="wp-live-preview preview-aurora">
-                <span class="live-badge">LIVE</span>
-              </div>
-              <span class="wp-label">Flowing Aurora</span>
-            </div>
-            <div class="wallpaper-card" data-wp="live-starfield" title="Interactive 3D Warp Starfield">
-              <div class="wp-live-preview preview-starfield">
-                <span class="live-badge">LIVE</span>
-              </div>
-              <span class="wp-label">Warp Starfield</span>
-            </div>
-            <div class="wallpaper-card" data-wp="live-matrix" title="Cyberpunk Digital Rain">
-              <div class="wp-live-preview preview-matrix">
-                <span class="live-badge">LIVE</span>
-              </div>
-              <span class="wp-label">Matrix Rain</span>
-            </div>
-            <div class="wallpaper-card" data-wp="live-fireflies" title="Cosmic Luminous Orbs">
-              <div class="wp-live-preview preview-fireflies">
-                <span class="live-badge">LIVE</span>
-              </div>
-              <span class="wp-label">Cosmic Orbs</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Upload Wallpaper Button -->
-        <div class="upload-wallpaper-box">
-          <label for="wallpaper-upload-input" class="upload-label">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-            <div>
-              <strong>Upload Custom Wallpaper</strong>
-              <span>JPG, PNG, WebP from your computer</span>
-            </div>
-            <input type="file" id="wallpaper-upload-input" accept="image/*" class="hidden">
-          </label>
-        </div>
-
-        <!-- Wallpaper Fine Tuning: Blur & Brightness Sliders -->
-        <div class="slider-control-group">
-          <div class="slider-item">
-            <div class="slider-label-row">
-              <span>Background Blur</span>
-              <span id="blur-val">8px</span>
-            </div>
-            <input type="range" id="slider-blur" min="0" max="30" value="8">
-          </div>
-          <div class="slider-item">
-            <div class="slider-label-row">
-              <span>Overlay Darkness</span>
-              <span id="darkness-val">50%</span>
-            </div>
-            <input type="range" id="slider-darkness" min="10" max="90" value="50">
-          </div>
-        </div>
-      </section>
-
-      <!-- SEARCH ENGINES SECTION -->
-      <section class="drawer-section">
-        <h3>Search Engines</h3>
-        <p class="section-sub">
-          Google is the default search engine. Switch instantly, add custom search engines, or remove any you don't need.
-        </p>
-        <div class="engine-drawer-actions" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
-          <button type="button" id="btn-drawer-add-engine" class="ghost-btn sm" style="flex: 1; justify-content: center; gap: 6px; white-space: nowrap;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Add Engine
-          </button>
-          <button type="button" id="btn-remove-all-engines" class="ghost-btn sm danger" style="flex: 1; justify-content: center; gap: 6px; white-space: nowrap;" title="Remove all search engines except Google">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
-            Remove All
-          </button>
-          <button type="button" id="btn-restore-engines" class="ghost-btn sm" style="width: 100%; justify-content: center; gap: 6px; display: none;" title="Restore built-in search engines">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>
-            Restore Default Engines
-          </button>
-        </div>
-        <div id="drawer-engine-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
-      </section>
-
-      <!-- BROWSER SYNC & SHORTCUT SECTION -->
-      <section class="drawer-section">
-        <h3>Browser Sync & Shortcuts</h3>
-        <p class="section-sub">
-          Sync bookmarks across all your devices for free using native Brave / Chrome sync.
-        </p>
-        <div style="background: var(--bg-glass); border: 1px solid var(--border-color); border-radius: 10px; padding: 12px; margin-bottom: 12px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent-color); flex-shrink: 0;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <div class="settings-block">
+            <div class="settings-toggle-row">
               <div>
-                <strong style="font-size: 0.82rem; color: var(--text-primary); display: block;">Quick Hook Shortcut</strong>
-                <span style="font-size: 0.72rem; color: var(--text-muted);">Save active tab without conflicts</span>
+                <strong>Show background images</strong>
+                <span>Display wallpaper image or clean minimal solid background</span>
+              </div>
+              <label class="switch-toggle" for="toggle-show-background">
+                <input type="checkbox" id="toggle-show-background" checked>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="settings-block" id="wallpaper-choices-block">
+            <h4 class="settings-block-title">Preset Wallpapers</h4>
+            <div class="wallpaper-presets-grid">
+              <div class="wallpaper-card active" data-wp="aurora" title="Aurora Nebula (AI Generated)">
+                <img src="assets/wallpapers/aurora.jpg" alt="Aurora" loading="lazy">
+                <span class="wp-label">Aurora Nebula</span>
+              </div>
+              <div class="wallpaper-card" data-wp="sunset" title="Warm Desert Sunset">
+                <img src="assets/wallpapers/sunset.jpg" alt="Sunset" loading="lazy">
+                <span class="wp-label">Dune Sunset</span>
+              </div>
+              <div class="wallpaper-card" data-wp="cyberpunk" title="Cyberpunk City Night">
+                <img src="assets/wallpapers/cyberpunk.jpg" alt="Cyberpunk" loading="lazy">
+                <span class="wp-label">Cyberpunk City</span>
+              </div>
+              <div class="wallpaper-card" data-wp="gradient-cosmic" title="Cosmic Gradient">
+                <div class="wp-gradient gradient-cosmic"></div>
+                <span class="wp-label">Cosmic Mesh</span>
+              </div>
+              <div class="wallpaper-card" data-wp="gradient-sunset" title="Sunset Aura Gradient">
+                <div class="wp-gradient gradient-sunset"></div>
+                <span class="wp-label">Golden Glow</span>
+              </div>
+              <div class="wallpaper-card" data-wp="gradient-minimal" title="Obsidian Velvet">
+                <div class="wp-gradient gradient-minimal gradient-obsidian"></div>
+                <span class="wp-label">Dark Velvet</span>
               </div>
             </div>
-            <kbd style="background: rgba(255,255,255,0.08); border: 1px solid var(--border-color); border-radius: 6px; padding: 3px 8px; font-size: 0.75rem; font-family: var(--font-mono); color: var(--accent-color);">Alt+H</kbd>
           </div>
-          <div style="font-size: 0.72rem; color: var(--text-secondary); line-height: 1.4; margin-bottom: 8px;">
-            Press on any tab to save. Opens Quick Menu with <kbd style="background: rgba(255,255,255,0.08); padding: 1px 4px; border-radius: 4px; font-family: var(--font-mono);">Alt+Shift+H</kbd>.
+
+          <div class="settings-block" id="wallpaper-live-block">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+              <h4 class="settings-block-title" style="margin-bottom:0;">Live Animated Wallpapers</h4>
+              <span class="live-fps-pill">60 FPS &bull; GPU</span>
+            </div>
+            <div class="wallpaper-presets-grid live-presets-grid">
+              <div class="wallpaper-card" data-wp="live-aurora" title="Flowing Northern Lights (Ambient Aurora)">
+                <div class="wp-live-preview preview-aurora">
+                  <span class="live-badge">LIVE</span>
+                </div>
+                <span class="wp-label">Flowing Aurora</span>
+              </div>
+              <div class="wallpaper-card" data-wp="live-starfield" title="Interactive 3D Warp Starfield">
+                <div class="wp-live-preview preview-starfield">
+                  <span class="live-badge">LIVE</span>
+                </div>
+                <span class="wp-label">Warp Starfield</span>
+              </div>
+              <div class="wallpaper-card" data-wp="live-matrix" title="Cyberpunk Digital Rain">
+                <div class="wp-live-preview preview-matrix">
+                  <span class="live-badge">LIVE</span>
+                </div>
+                <span class="wp-label">Matrix Rain</span>
+              </div>
+              <div class="wallpaper-card" data-wp="live-fireflies" title="Cosmic Luminous Orbs">
+                <div class="wp-live-preview preview-fireflies">
+                  <span class="live-badge">LIVE</span>
+                </div>
+                <span class="wp-label">Cosmic Orbs</span>
+              </div>
+            </div>
           </div>
-          <button type="button" id="btn-configure-shortcuts" class="ghost-btn sm" style="width: 100%; justify-content: center; gap: 6px; font-size: 0.72rem; padding: 5px 8px;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-            <span>Customize Shortcuts in Browser</span>
-          </button>
-        </div>
 
-        <button type="button" id="btn-drawer-sync-cloud" class="primary-btn sm" style="width: 100%; justify-content: center; gap: 8px; margin-bottom: 8px;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-          Two-Way Browser Sync
-        </button>
-        <span style="font-size: 0.7rem; color: var(--text-muted); display: block; text-align: center;">
-          Syncs with Brave Sync Chain or Google Account Sync
-        </span>
-      </section>
-
-      <!-- DISPLAY & LAYOUT CONTROLS -->
-      <section class="drawer-section">
-        <h3>Display & Layout View</h3>
-        <p class="section-sub">
-          Switch bookmark layout view or toggle privacy screen blur.
-        </p>
-        <div class="layout-toggle-group" style="display: flex; gap: 6px; width: 100%; margin-bottom: 10px;">
-          <button id="layout-board" class="layout-btn active" title="Google Keep Style Masonry Board Grid" style="flex: 1; justify-content: center; gap: 4px; padding: 6px 4px; font-size: 0.72rem;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-            <span>Boards</span>
-          </button>
-          <button id="layout-cards" class="layout-btn" title="Individual Bookmark Cards" style="flex: 1; justify-content: center; gap: 4px; padding: 6px 4px; font-size: 0.72rem;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-            <span>Cards</span>
-          </button>
-          <button id="layout-compact" class="layout-btn" title="Compact Matrix View" style="flex: 1; justify-content: center; gap: 4px; padding: 6px 4px; font-size: 0.72rem;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
-            <span>Compact</span>
-          </button>
-          <button id="layout-list" class="layout-btn" title="List Details View" style="flex: 1; justify-content: center; gap: 4px; padding: 6px 4px; font-size: 0.72rem;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-            <span>List</span>
-          </button>
-        </div>
-        <button id="btn-privacy-toggle" class="ghost-btn sm" style="width: 100%; justify-content: center; gap: 6px; margin-bottom: 8px;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
-          <span>Privacy Mode (Screen Blur)</span>
-        </button>
-
-        <!-- Dedicated Top Sites Visibility Row -->
-        <div class="drawer-toggle-row" style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-glass); border: 1px solid var(--border-color); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;">
-          <div>
-            <strong style="font-size: 0.82rem; color: var(--text-primary); display: block;">Top Sites / Squircles</strong>
-            <span style="font-size: 0.72rem; color: var(--text-muted);">Show or hide app tiles below search</span>
+          <div class="settings-block">
+            <h4 class="settings-block-title">Upload from Device</h4>
+            <div class="upload-wallpaper-box">
+              <label for="wallpaper-upload-input" class="upload-label">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <div>
+                  <strong>Upload Custom Wallpaper</strong>
+                  <span>MP4, WebM video or JPG, PNG, GIF, WebP image</span>
+                </div>
+                <input type="file" id="wallpaper-upload-input" accept="image/*,video/mp4,video/webm" class="hidden">
+              </label>
+            </div>
+            <div id="custom-wallpaper-actions" class="custom-wallpaper-actions hidden" style="margin-top: 10px; display: flex; gap: 8px; justify-content: flex-end;">
+              <button type="button" id="btn-remove-custom-wallpaper" class="ghost-btn sm" style="font-size: 12px; color: var(--danger-color, #ef4444);">
+                Remove Custom Wallpaper
+              </button>
+            </div>
           </div>
-          <button type="button" id="btn-toggle-top-sites-vis" class="ghost-btn sm" style="gap: 6px; padding: 5px 12px; font-weight: 600;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            <span id="label-top-sites-vis">Show</span>
-          </button>
-        </div>
 
-        <div id="drawer-top-sites-restore-row" style="display: none; align-items: center; justify-content: space-between; background: var(--bg-glass); border: 1px solid var(--border-color); border-radius: 10px; padding: 8px 12px; margin-bottom: 8px;">
-          <div>
-            <strong style="font-size: 0.8rem; color: var(--text-primary); display: block;">Removed App Tiles</strong>
-            <span style="font-size: 0.7rem; color: var(--text-muted);" id="drawer-top-sites-restore-count">0 hidden</span>
-          </div>
-          <button type="button" id="btn-drawer-restore-top-sites" class="ghost-btn xs" style="padding: 4px 10px; font-weight: 600;">
-            Restore All
-          </button>
-        </div>
-
-        <!-- Dedicated Time Format Toggle Row (12h vs 24h) -->
-        <div class="drawer-toggle-row" style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-glass); border: 1px solid var(--border-color); border-radius: 10px; padding: 10px 12px;">
-          <div>
-            <strong style="font-size: 0.82rem; color: var(--text-primary); display: block;">Time Format</strong>
-            <span style="font-size: 0.72rem; color: var(--text-muted);">12-hour (AM/PM) or 24-hour clock</span>
-          </div>
-          <div class="segmented-pill" id="time-format-pill">
-            <button type="button" id="btn-time-12" class="segmented-btn" data-format="12">12 hr</button>
-            <button type="button" id="btn-time-24" class="segmented-btn active" data-format="24">24 hr</button>
+          <div class="settings-block">
+            <h4 class="settings-block-title">Fine Tuning</h4>
+            <div class="slider-control-group">
+              <div class="slider-item">
+                <div class="slider-label-row">
+                  <span>Background Blur</span>
+                  <span id="blur-val">8px</span>
+                </div>
+                <input type="range" id="slider-blur" min="0" max="30" value="8">
+              </div>
+              <div class="slider-item">
+                <div class="slider-label-row">
+                  <span>Overlay Darkness</span>
+                  <span id="darkness-val">50%</span>
+                </div>
+                <input type="range" id="slider-darkness" min="10" max="90" value="50">
+              </div>
+            </div>
           </div>
         </div>
-      </section>
 
-      <!-- PREFERENCES & BACKUP -->
-      <section class="drawer-section">
-        <h3>Database & Bookmarks Backup</h3>
-        <p class="section-sub">
-          Import from browser, backup to file, or auto-organize your bookmarks.
-        </p>
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-          <button id="btn-import-browser" class="primary-btn sm" style="width: 100%; justify-content: center; gap: 8px;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            <span>1-Click Import Browser Bookmarks</span>
-          </button>
-          
-          <div style="display: flex; gap: 8px;">
-            <label for="import-file-input" class="ghost-btn sm clickable" style="flex: 1; justify-content: center; gap: 6px;" title="Import JSON or Netscape HTML file">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              <span>Import File</span>
-              <input type="file" id="import-file-input" accept=".json,.html" class="hidden">
-            </label>
-            <button id="btn-drawer-auto-categorize" class="ghost-btn sm" style="flex: 1; justify-content: center; gap: 6px;">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
-              <span>Auto-Sort</span>
+        <!-- PANEL: Themes & Colors -->
+        <div class="settings-panel" id="panel-appearance">
+          <div class="settings-panel-header">
+            <h3>Themes &amp; Colors</h3>
+            <p>Choose a color theme and customize your dual-color accent gradient</p>
+          </div>
+
+          <div class="settings-block">
+            <h4 class="settings-block-title">Color Themes</h4>
+            <div class="theme-options-grid">
+              <button class="theme-card active" data-set-theme="midnight">
+                <div class="theme-preview midnight-preview"></div>
+                <span>Midnight Obsidian</span>
+              </button>
+              <button class="theme-card" data-set-theme="glass">
+                <div class="theme-preview glass-preview"></div>
+                <span>Frosted Glass</span>
+              </button>
+              <button class="theme-card" data-set-theme="cyberpunk">
+                <div class="theme-preview cyberpunk-preview"></div>
+                <span>Cyberpunk Neon</span>
+              </button>
+              <button class="theme-card" data-set-theme="sunset">
+                <div class="theme-preview sunset-preview"></div>
+                <span>Sunset Amber</span>
+              </button>
+              <button class="theme-card" data-set-theme="emerald">
+                <div class="theme-preview emerald-preview"></div>
+                <span>Nord Emerald</span>
+              </button>
+              <button class="theme-card" data-set-theme="cosmos">
+                <div class="theme-preview cosmos-preview"></div>
+                <span>Deep Cosmos</span>
+              </button>
+              <button class="theme-card" data-set-theme="minimal-light">
+                <div class="theme-preview light-preview"></div>
+                <span>Minimal Light</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="settings-block">
+            <h4 class="settings-block-title">Custom Accent Gradient</h4>
+            <p class="settings-block-sub">Pick two colors to create your custom gradient</p>
+            <div class="accent-gradient-wrap">
+              <div class="accent-gradient-header">
+                <div id="gradient-preview-badge" class="gradient-preview-badge" title="Live Gradient Preview">HookTab
+                </div>
+              </div>
+              <div class="dual-accent-row">
+                <div class="color-input-wrap">
+                  <span class="color-picker-label">Color 1</span>
+                  <input type="color" id="accent-color-input" value="#6366f1" title="Primary Accent Color">
+                  <span id="accent-hex-label">#6366F1</span>
+                </div>
+                <div class="gradient-connector">&#10022;</div>
+                <div class="color-input-wrap">
+                  <span class="color-picker-label">Color 2</span>
+                  <input type="color" id="accent-color-2-input" value="#ec4899" title="Secondary Gradient Color">
+                  <span id="accent-hex-2-label">#EC4899</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL: Search -->
+        <div class="settings-panel" id="panel-search">
+          <div class="settings-panel-header">
+            <h3>Search</h3>
+            <p>Manage your search engines. Google is the default.</p>
+          </div>
+          <div class="settings-block">
+            <div class="engine-drawer-actions" style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
+              <button type="button" id="btn-drawer-add-engine" class="ghost-btn sm"
+                style="flex: 1; justify-content: center; gap: 6px; white-space: nowrap;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                Add Engine
+              </button>
+              <button type="button" id="btn-remove-all-engines" class="ghost-btn sm danger"
+                style="flex: 1; justify-content: center; gap: 6px; white-space: nowrap;"
+                title="Remove all search engines except Google">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                </svg>
+                Remove All
+              </button>
+              <button type="button" id="btn-restore-engines" class="ghost-btn sm"
+                style="width: 100%; justify-content: center; gap: 6px; display: none;"
+                title="Restore built-in search engines">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="1 4 1 10 7 10" />
+                  <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" />
+                </svg>
+                Restore Default Engines
+              </button>
+            </div>
+            <div id="drawer-engine-list" style="display: flex; flex-direction: column; gap: 6px;"></div>
+          </div>
+        </div>
+
+        <!-- PANEL: Top Sites -->
+        <div class="settings-panel" id="panel-topsites">
+          <div class="settings-panel-header">
+            <h3>Top Sites</h3>
+            <p>Manage your quick access squircle tiles below the search bar</p>
+          </div>
+          <div class="settings-block">
+            <div class="settings-toggle-row">
+              <div>
+                <strong>Show Top Sites</strong>
+                <span>Show or hide app tiles below search</span>
+              </div>
+              <label class="switch-toggle" for="toggle-top-sites">
+                <input type="checkbox" id="toggle-top-sites" checked>
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="settings-block" id="drawer-top-sites-restore-row" style="display:none;">
+            <div class="settings-toggle-row">
+              <div>
+                <strong>Removed App Tiles</strong>
+                <span id="drawer-top-sites-restore-count">0 hidden</span>
+              </div>
+              <button type="button" id="btn-drawer-restore-top-sites" class="ghost-btn sm"
+                style="padding: 5px 12px; font-weight: 600;">Restore All</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL: Clock -->
+        <div class="settings-panel" id="panel-clock">
+          <div class="settings-panel-header">
+            <h3>Clock &amp; Weather</h3>
+            <p>Customize how the clock, date, and weather are displayed</p>
+          </div>
+          <div class="settings-block">
+            <div class="settings-toggle-row">
+              <div>
+                <strong>Time Format</strong>
+                <span>12-hour (AM/PM) or 24-hour clock</span>
+              </div>
+              <div class="segmented-pill" id="time-format-pill">
+                <button type="button" id="btn-time-12" class="segmented-btn" data-format="12">12 hr</button>
+                <button type="button" id="btn-time-24" class="segmented-btn active" data-format="24">24 hr</button>
+              </div>
+            </div>
+          </div>
+          <div class="settings-block">
+            <div class="settings-toggle-row">
+              <div>
+                <strong>Weather Unit</strong>
+                <span>Switch temperature between Celsius and Fahrenheit</span>
+              </div>
+              <div class="segmented-pill" id="weather-unit-pill">
+                <button type="button" id="btn-unit-c" class="segmented-btn active" data-unit="C">&deg;C</button>
+                <button type="button" id="btn-unit-f" class="segmented-btn" data-unit="F">&deg;F</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PANEL: Bookmarks & Layout -->
+        <div class="settings-panel" id="panel-bookmarks">
+          <div class="settings-panel-header">
+            <h3>Bookmarks</h3>
+            <p>Display options, sync, and database backup</p>
+          </div>
+          <div class="settings-block">
+            <div class="settings-toggle-row">
+              <div>
+                <strong>Privacy Mode</strong>
+                <span>Blur bookmarks when screen sharing or recording (Hover to peek)</span>
+              </div>
+              <label class="switch-toggle" for="toggle-privacy-mode">
+                <input type="checkbox" id="toggle-privacy-mode">
+                <span class="switch-slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="settings-block">
+            <div class="settings-info-card">
+              <div class="settings-info-card-row">
+                <div class="settings-info-card-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    style="color: var(--accent-color);">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                  </svg>
+                </div>
+                <div>
+                  <strong>Quick Hook Shortcut</strong>
+                  <span>Save active tab without conflicts</span>
+                </div>
+                <kbd>Alt+H</kbd>
+              </div>
+              <p style="font-size:0.72rem;color:var(--text-secondary);line-height:1.4;margin-top:8px;">Press on any tab
+                to save. Opens Quick Menu with <kbd
+                  style="background:rgba(255,255,255,0.08);padding:1px 4px;border-radius:4px;font-family:var(--font-mono);">Alt+Shift+H</kbd>.
+              </p>
+              <button type="button" id="btn-configure-shortcuts" class="ghost-btn sm"
+                style="width:100%;justify-content:center;gap:6px;font-size:0.72rem;padding:6px 8px;margin-top:8px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="3" />
+                  <path
+                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                </svg>
+                <span>Customize Shortcuts in Browser</span>
+              </button>
+            </div>
+            <button type="button" id="btn-drawer-sync-cloud" class="primary-btn sm"
+              style="width:100%;justify-content:center;gap:8px;margin-top:12px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+              </svg>
+              Two-Way Browser Sync
+            </button>
+            <span style="font-size:0.7rem;color:var(--text-muted);display:block;text-align:center;margin-top:6px;">Syncs
+              with Brave Sync Chain or Google Account Sync</span>
+          </div>
+          <div class="settings-block">
+            <h4 class="settings-block-title">Import &amp; Export</h4>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <button id="btn-import-browser" class="primary-btn sm" style="width:100%;justify-content:center;gap:8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                <span>1-Click Import Browser Bookmarks</span>
+              </button>
+              <label for="import-file-input" class="ghost-btn sm clickable"
+                style="justify-content:center;gap:6px;cursor:pointer;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="17 8 12 3 7 8" />
+                  <line x1="12" y1="3" x2="12" y2="15" />
+                </svg>
+                <span>Import from File (.json / .html)</span>
+                <input type="file" id="import-file-input" accept=".json,.html" class="hidden">
+              </label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+                <button id="btn-drawer-export" class="ghost-btn sm" style="flex:1;justify-content:center;">Export
+                  JSON</button>
+                <button id="btn-drawer-export-html" class="ghost-btn sm" style="flex:1;justify-content:center;">Export
+                  HTML</button>
+              </div>
+            </div>
+          </div>
+          <div class="settings-block">
+            <h4 class="settings-block-title">Danger Zone</h4>
+            <button id="btn-clear-all" class="ghost-btn sm danger" style="width:100%;justify-content:center;">Clear All
+              Bookmarks</button>
+          </div>
+        </div>
+
+        <!-- PANEL: Feedback -->
+        <div class="settings-panel" id="panel-feedback">
+          <div class="settings-panel-header">
+            <h3>Help &amp; Feedback</h3>
+            <p>Found an issue or have a feature idea? Let us know!</p>
+          </div>
+          <div class="settings-block">
+            <button type="button" id="btn-report-bug" class="ghost-btn sm"
+              style="width:100%;justify-content:center;gap:8px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v4" />
+                <path d="M12 16h.01" />
+              </svg>
+              <span>Report a Bug / Give Feedback</span>
             </button>
           </div>
-
-          <div class="reset-actions-row" style="display: flex; gap: 8px; flex-wrap: wrap;">
-            <button id="btn-drawer-export" class="ghost-btn sm" style="flex: 1; justify-content: center;">Export JSON</button>
-            <button id="btn-drawer-export-html" class="ghost-btn sm" style="flex: 1; justify-content: center;">Export HTML</button>
-            <button id="btn-clear-all" class="ghost-btn sm danger" style="flex: 1; justify-content: center;">Clear All</button>
-          </div>
         </div>
-      </section>
 
-      <!-- SUPPORT & BUG REPORT -->
-      <section class="drawer-section">
-        <h3>Help & Bug Report</h3>
-        <p class="section-sub">
-          Found an issue or have a feature idea? Let us know!
-        </p>
-        <button type="button" id="btn-report-bug" class="ghost-btn sm" style="width: 100%; justify-content: center; gap: 8px;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
-          <span>Report a Bug / Give Feedback</span>
-        </button>
-      </section>
-    </div>
-  </aside>
+      </div><!-- end .settings-content -->
+    </div><!-- end .settings-modal -->
+  </div><!-- end .settings-modal-backdrop -->
 
   <!-- ADD / EDIT BOOKMARK MODAL -->
   <div id="bookmark-modal" class="modal-backdrop hidden">
@@ -609,18 +846,19 @@
       </div>
       <form id="bookmark-form" class="modal-form">
         <input type="hidden" id="bm-id">
-        
+
         <div class="form-group">
           <label for="bm-url">Website URL *</label>
           <div class="url-input-wrap">
-            <input type="url" id="bm-url" placeholder="https://example.com" required autocomplete="off">
-            <button type="button" id="btn-auto-fill" class="ghost-btn xs" title="Auto-detect Title & Category">Auto-Fill</button>
+            <input type="url" id="bm-url" placeholder="URL" required autocomplete="off" spellcheck="false">
+            <button type="button" id="btn-auto-fill" class="ghost-btn xs"
+              title="Auto-detect Title & Category">Auto-Fill</button>
           </div>
         </div>
 
         <div class="form-group">
           <label for="bm-title">Title *</label>
-          <input type="text" id="bm-title" placeholder="Website or Tool Name" required autocomplete="off">
+          <input type="text" id="bm-title" placeholder="Title" required autocomplete="off" spellcheck="false">
         </div>
 
         <div class="form-row">
@@ -648,7 +886,7 @@
 
         <div class="form-group">
           <label for="bm-tags">Tags (comma-separated)</label>
-          <input type="text" id="bm-tags" placeholder="tools, design, ai">
+          <input type="text" id="bm-tags" placeholder="Tags" autocomplete="off" spellcheck="false">
         </div>
 
         <div class="form-check-group">
@@ -676,18 +914,20 @@
       <form id="engine-form" class="modal-form">
         <div class="form-group">
           <label for="custom-eng-name">Engine Name *</label>
-          <input type="text" id="custom-eng-name" placeholder="e.g. Wikipedia, Ecosia, Perplexity" required autocomplete="off">
+          <input type="text" id="custom-eng-name" placeholder="Engine Name" required
+            autocomplete="off" spellcheck="false">
         </div>
         <div class="form-group">
           <label for="custom-eng-url">Search URL *</label>
-          <input type="url" id="custom-eng-url" placeholder="https://en.wikipedia.org/wiki/Special:Search?search=" required autocomplete="off">
+          <input type="url" id="custom-eng-url" placeholder="Search URL"
+            required autocomplete="off" spellcheck="false">
           <span style="font-size: 0.72rem; color: var(--text-muted); margin-top: 2px;">
-            Enter search query URL ending with query parameter (e.g. <code>https://example.com/search?q=</code>)
+            Search URL ending with query parameter
           </span>
         </div>
         <div class="form-group">
-          <label for="custom-eng-icon">Website / Icon URL (Optional)</label>
-          <input type="url" id="custom-eng-icon" placeholder="https://wikipedia.org (Auto-fetches favicon)">
+          <label for="custom-eng-icon">Icon URL (Optional)</label>
+          <input type="url" id="custom-eng-icon" placeholder="Icon URL" autocomplete="off" spellcheck="false">
         </div>
         <div class="modal-actions">
           <button type="button" id="btn-cancel-engine-modal" class="ghost-btn">Cancel</button>
@@ -702,7 +942,11 @@
     <div class="modal-card">
       <div class="modal-header">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 8v4" />
+            <path d="M12 16h.01" />
+          </svg>
           <h3 style="margin: 0;">Report a Bug / Feedback</h3>
         </div>
         <button id="btn-close-bug-modal" class="close-icon-btn">&times;</button>
@@ -720,22 +964,28 @@
 
         <div class="form-group">
           <label for="bug-title">Summary *</label>
-          <input type="text" id="bug-title" placeholder="Brief summary of the issue or idea" required autocomplete="off">
+          <input type="text" id="bug-title" placeholder="Summary" required
+            autocomplete="off" spellcheck="false">
         </div>
 
         <div class="form-group">
           <label for="bug-description">Description *</label>
-          <textarea id="bug-description" rows="4" placeholder="What happened, or what would you like to see? Steps to reproduce if it's a bug." required style="width:100%; background:rgba(0,0,0,0.25); border:1px solid var(--border-color); border-radius:var(--btn-radius); color:var(--text-primary); padding:10px; font-family:var(--font-sans); font-size:0.85rem; outline:none; resize:vertical;"></textarea>
+          <textarea id="bug-description" rows="4"
+            placeholder="Describe the issue or idea..." required spellcheck="false"
+            style="width:100%; background:rgba(0,0,0,0.25); border:1px solid var(--border-color); border-radius:var(--btn-radius); color:var(--text-primary); padding:10px; font-family:var(--font-sans); font-size:0.85rem; outline:none; resize:vertical;"></textarea>
         </div>
 
         <div class="form-group">
           <label>Safe Diagnostics (Automatically Attached)</label>
-          <div id="bug-diagnostics" style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono); line-height: 1.5; word-break: break-all;"></div>
+          <div id="bug-diagnostics"
+            style="background: rgba(0,0,0,0.3); border: 1px solid var(--border-color); border-radius: 6px; padding: 8px 12px; font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-mono); line-height: 1.5; word-break: break-all;">
+          </div>
         </div>
 
         <div class="modal-actions" style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 10px;">
           <button type="button" id="btn-cancel-bug-modal" class="ghost-btn">Cancel</button>
-          <button type="button" id="btn-copy-diagnostics" class="ghost-btn sm" title="Copy diagnostic details to clipboard">Copy Info</button>
+          <button type="button" id="btn-copy-diagnostics" class="ghost-btn sm"
+            title="Copy diagnostic details to clipboard">Copy Info</button>
           <button type="submit" class="primary-btn">Submit Report</button>
         </div>
       </form>
@@ -752,11 +1002,11 @@
       <form id="top-site-form" class="modal-form">
         <div class="form-group">
           <label for="top-site-name">Name *</label>
-          <input type="text" id="top-site-name" placeholder="e.g. YouTube, GitHub" required autocomplete="off">
+          <input type="text" id="top-site-name" placeholder="Name" required autocomplete="off" spellcheck="false">
         </div>
         <div class="form-group">
           <label for="top-site-url">URL *</label>
-          <input type="url" id="top-site-url" placeholder="https://example.com" required autocomplete="off">
+          <input type="url" id="top-site-url" placeholder="URL" required autocomplete="off" spellcheck="false">
         </div>
         <div class="modal-actions" style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px;">
           <button type="button" id="btn-cancel-top-site-modal" class="ghost-btn">Cancel</button>
@@ -772,4 +1022,5 @@
   <!-- Main JavaScript File -->
   <script src="newtab.js"></script>
 </body>
+
 </html>

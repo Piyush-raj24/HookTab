@@ -30,6 +30,7 @@
     blur: 8,
     darkness: 50,
     quickNotes: '',
+    notesPosition: null, // { x: number, y: number }
     timeFormat: '24', // '12' | '24'
     weatherUnit: 'C',
     weatherCache: null,
@@ -40,7 +41,7 @@
     topSitesHidden: false, // Whether top sites row is hidden
     topSitesShowMore: false, // false = 1 row (7 items), true = 2 rows
     topSitesPage: 0, // 0 = page 1, 1 = page 2
-    customBoards: ['Other bookmarks', 'kk', 'kl']
+    customBoards: []
   };
 
   // Safe wrapper for chrome.storage or fallback to window.localStorage
@@ -78,176 +79,184 @@
   // =========================================================================
   // 2. DOM ELEMENTS CACHE
   // =========================================================================
-  const dom = {
-    bgImage: document.getElementById('bg-image'),
-    liveCanvas: document.getElementById('live-canvas'),
-    bgOverlay: document.getElementById('bg-overlay'),
-    timeWidget: document.getElementById('time-widget'),
-    clock: document.getElementById('clock-display'),
-    greeting: document.getElementById('greeting-display'),
-    date: document.getElementById('date-display'),
-    btnTime12: document.getElementById('btn-time-12'),
-    btnTime24: document.getElementById('btn-time-24'),
-    timeFormatPill: document.getElementById('time-format-pill'),
-    bookmarksCountPill: document.getElementById('bookmarks-count-pill'),
-    btnSyncBrave: document.getElementById('btn-sync-brave'),
+  const dom = {};
+
+  function populateDom() {
+    dom.bgImage = document.getElementById('bg-image');
+    dom.bgVideo = document.getElementById('bg-video');
+    dom.liveCanvas = document.getElementById('live-canvas');
+    dom.bgOverlay = document.getElementById('bg-overlay');
+    dom.customWallpaperActions = document.getElementById('custom-wallpaper-actions');
+    dom.btnRemoveCustomWallpaper = document.getElementById('btn-remove-custom-wallpaper');
+    dom.timeWidget = document.getElementById('time-widget');
+    dom.clock = document.getElementById('clock-display');
+    dom.greeting = document.getElementById('greeting-display');
+    dom.date = document.getElementById('date-display');
+    dom.btnTime12 = document.getElementById('btn-time-12');
+    dom.btnTime24 = document.getElementById('btn-time-24');
+    dom.timeFormatPill = document.getElementById('time-format-pill');
+    dom.bookmarksCountPill = document.getElementById('bookmarks-count-pill');
+    dom.btnSyncBrave = document.getElementById('btn-sync-brave');
     
     // Layout toggles
-    layoutCards: document.getElementById('layout-cards'),
-    layoutBoard: document.getElementById('layout-board'),
-    layoutCompact: document.getElementById('layout-compact'),
-    layoutList: document.getElementById('layout-list'),
+    dom.layoutCards = document.getElementById('layout-cards');
+    dom.layoutBoard = document.getElementById('layout-board');
+    dom.layoutCompact = document.getElementById('layout-compact');
+    dom.layoutList = document.getElementById('layout-list');
 
     // Search & Input
-    searchForm: document.getElementById('search-form'),
-    searchInput: document.getElementById('search-input'),
-    btnClearSearch: document.getElementById('btn-clear-search'),
-    btnVoiceSearch: document.getElementById('btn-voice-search'),
-    btnEngineTrigger: document.getElementById('btn-engine-trigger'),
-    activeEngineIcon: document.getElementById('active-engine-icon'),
-    enginePopover: document.getElementById('engine-popover'),
-    engineList: document.getElementById('engine-list'),
-    btnAddEngine: document.getElementById('btn-add-engine'),
-    btnDrawerAddEngine: document.getElementById('btn-drawer-add-engine'),
-    btnRemoveAllEngines: document.getElementById('btn-remove-all-engines'),
-    btnRestoreEngines: document.getElementById('btn-restore-engines'),
-    drawerEngineList: document.getElementById('drawer-engine-list'),
-    searchSuggestions: document.getElementById('search-suggestions'),
-    modeWeb: document.getElementById('mode-web'),
-    modeBookmarks: document.getElementById('mode-bookmarks'),
+    dom.searchForm = document.getElementById('search-form');
+    dom.searchInput = document.getElementById('search-input');
+    dom.btnClearSearch = document.getElementById('btn-clear-search');
+    dom.btnVoiceSearch = document.getElementById('btn-voice-search');
+    dom.btnEngineTrigger = document.getElementById('btn-engine-trigger');
+    dom.activeEngineIcon = document.getElementById('active-engine-icon');
+    dom.enginePopover = document.getElementById('engine-popover');
+    dom.engineList = document.getElementById('engine-list');
+    dom.btnAddEngine = document.getElementById('btn-add-engine');
+    dom.btnDrawerAddEngine = document.getElementById('btn-drawer-add-engine');
+    dom.btnRemoveAllEngines = document.getElementById('btn-remove-all-engines');
+    dom.btnRestoreEngines = document.getElementById('btn-restore-engines');
+    dom.drawerEngineList = document.getElementById('drawer-engine-list');
+    dom.searchSuggestions = document.getElementById('search-suggestions');
+    dom.modeWeb = document.getElementById('mode-web');
+    dom.modeBookmarks = document.getElementById('mode-bookmarks');
 
     // Quick Access / Brave Top Sites
-    quickAccessBar: document.getElementById('quick-access-bar'),
-    quickAccessGrid: document.getElementById('quick-access-grid'),
-    btnTopSitesMenu: document.getElementById('btn-top-sites-menu'),
-    topSitesMenuPopover: document.getElementById('top-sites-menu-popover'),
-    menuAddSite: document.getElementById('menu-add-site'),
-    menuToggleMore: document.getElementById('menu-toggle-more'),
-    labelToggleMore: document.getElementById('label-toggle-more'),
-    menuToggleFrequent: document.getElementById('menu-toggle-frequent'),
-    labelToggleFrequent: document.getElementById('label-toggle-frequent'),
-    menuRestoreDivider: document.getElementById('menu-restore-divider'),
-    menuRestoreSites: document.getElementById('menu-restore-sites'),
-    menuHideSites: document.getElementById('menu-hide-sites'),
-    topSitesPagination: document.getElementById('top-sites-pagination'),
-    btnToggleTopSitesVis: document.getElementById('btn-toggle-top-sites-vis'),
-    labelTopSitesVis: document.getElementById('label-top-sites-vis'),
-    drawerTopSitesRestoreRow: document.getElementById('drawer-top-sites-restore-row'),
-    drawerTopSitesRestoreCount: document.getElementById('drawer-top-sites-restore-count'),
-    btnDrawerRestoreTopSites: document.getElementById('btn-drawer-restore-top-sites'),
+    dom.quickAccessBar = document.getElementById('quick-access-bar');
+    dom.quickAccessGrid = document.getElementById('quick-access-grid');
+    dom.btnTopSitesMenu = document.getElementById('btn-top-sites-menu');
+    dom.topSitesMenuPopover = document.getElementById('top-sites-menu-popover');
+    dom.menuAddSite = document.getElementById('menu-add-site');
+    dom.menuToggleMore = document.getElementById('menu-toggle-more');
+    dom.labelToggleMore = document.getElementById('label-toggle-more');
+    dom.menuToggleFrequent = document.getElementById('menu-toggle-frequent');
+    dom.labelToggleFrequent = document.getElementById('label-toggle-frequent');
+    dom.menuRestoreDivider = document.getElementById('menu-restore-divider');
+    dom.menuRestoreSites = document.getElementById('menu-restore-sites');
+    dom.menuHideSites = document.getElementById('menu-hide-sites');
+    dom.topSitesPagination = document.getElementById('top-sites-pagination');
+    dom.btnToggleTopSitesVis = document.getElementById('btn-toggle-top-sites-vis');
+    dom.labelTopSitesVis = document.getElementById('label-top-sites-vis');
+    dom.drawerTopSitesRestoreRow = document.getElementById('drawer-top-sites-restore-row');
+    dom.drawerTopSitesRestoreCount = document.getElementById('drawer-top-sites-restore-count');
+    dom.btnDrawerRestoreTopSites = document.getElementById('btn-drawer-restore-top-sites');
 
     // Add Top Site Modal
-    topSiteModal: document.getElementById('top-site-modal'),
-    topSiteForm: document.getElementById('top-site-form'),
-    topSiteName: document.getElementById('top-site-name'),
-    topSiteUrl: document.getElementById('top-site-url'),
-    btnCloseTopSiteModal: document.getElementById('btn-close-top-site-modal'),
-    btnCancelTopSiteModal: document.getElementById('btn-cancel-top-site-modal'),
+    dom.topSiteModal = document.getElementById('top-site-modal');
+    dom.topSiteForm = document.getElementById('top-site-form');
+    dom.topSiteName = document.getElementById('top-site-name');
+    dom.topSiteUrl = document.getElementById('top-site-url');
+    dom.btnCloseTopSiteModal = document.getElementById('btn-close-top-site-modal');
+    dom.btnCancelTopSiteModal = document.getElementById('btn-cancel-top-site-modal');
 
     // Privacy Mode (Screen Share Blur)
-    btnPrivacyToggle: document.getElementById('btn-privacy-toggle'),
-    privacyBanner: document.getElementById('privacy-banner'),
-    btnExitPrivacy: document.getElementById('btn-exit-privacy'),
+    dom.btnPrivacyToggle = document.getElementById('btn-privacy-toggle');
+    dom.privacyBanner = document.getElementById('privacy-banner');
+    dom.btnExitPrivacy = document.getElementById('btn-exit-privacy');
 
     // Multiple Pages
-    pagesBar: document.getElementById('pages-bar'),
-    pagesTabs: document.getElementById('pages-tabs'),
-    btnAddPage: document.getElementById('btn-add-page'),
+    dom.pagesBar = document.getElementById('pages-bar');
+    dom.pagesTabs = document.getElementById('pages-tabs');
+    dom.btnAddPage = document.getElementById('btn-add-page');
 
     // Bookmarks Hub
-    categoryTabs: document.getElementById('category-tabs'),
-    bookmarkFilterInput: document.getElementById('bookmark-filter-input'),
-    sortSelect: document.getElementById('sort-select'),
-    bookmarksGrid: document.getElementById('bookmarks-grid'),
-    lumilistBoard: document.getElementById('lumilist-board'),
-    bookmarksSentinel: document.getElementById('bookmarks-sentinel'),
-    sentinelText: document.getElementById('sentinel-text'),
-    emptyState: document.getElementById('empty-state'),
-    btnAddBookmark: document.getElementById('btn-add-bookmark'),
-    btnEmptyAdd: document.getElementById('btn-empty-add'),
-    btnEmptyImport: document.getElementById('btn-empty-import'),
-    btnImportBrowser: document.getElementById('btn-import-browser'),
-    btnAutoCategorize: document.getElementById('btn-auto-categorize'),
-    btnExportJson: document.getElementById('btn-export-json'),
-    btnExportHtml: document.getElementById('btn-export-html'),
-    btnDrawerExport: document.getElementById('btn-drawer-export'),
-    btnDrawerExportHtml: document.getElementById('btn-drawer-export-html'),
-    btnDrawerAutoCategorize: document.getElementById('btn-drawer-auto-categorize'),
-    btnDrawerSyncCloud: document.getElementById('btn-drawer-sync-cloud'),
-    btnConfigureShortcuts: document.getElementById('btn-configure-shortcuts'),
-    importFileInput: document.getElementById('import-file-input'),
+    dom.categoryTabs = document.getElementById('category-tabs');
+    dom.bookmarkFilterInput = document.getElementById('bookmark-filter-input');
+    dom.sortSelect = document.getElementById('sort-select');
+    dom.bookmarksGrid = document.getElementById('bookmarks-grid');
+    dom.lumilistBoard = document.getElementById('lumilist-board');
+    dom.bookmarksSentinel = document.getElementById('bookmarks-sentinel');
+    dom.sentinelText = document.getElementById('sentinel-text');
+    dom.emptyState = document.getElementById('empty-state');
+    dom.btnAddBookmark = document.getElementById('btn-add-bookmark');
+    dom.btnEmptyAdd = document.getElementById('btn-empty-add');
+    dom.btnEmptyImport = document.getElementById('btn-empty-import');
+    dom.btnImportBrowser = document.getElementById('btn-import-browser');
+    dom.btnAutoCategorize = document.getElementById('btn-auto-categorize');
+    dom.btnExportJson = document.getElementById('btn-export-json');
+    dom.btnExportHtml = document.getElementById('btn-export-html');
+    dom.btnDrawerExport = document.getElementById('btn-drawer-export');
+    dom.btnDrawerExportHtml = document.getElementById('btn-drawer-export-html');
+    dom.btnDrawerAutoCategorize = document.getElementById('btn-drawer-auto-categorize');
+    dom.btnDrawerSyncCloud = document.getElementById('btn-drawer-sync-cloud');
+    dom.btnConfigureShortcuts = document.getElementById('btn-configure-shortcuts');
+    dom.importFileInput = document.getElementById('import-file-input');
 
     // Customizer Drawer
-    btnOpenCustomizer: document.getElementById('btn-open-customizer'),
-    btnCloseCustomizer: document.getElementById('btn-close-customizer'),
-    customizerDrawer: document.getElementById('customizer-drawer'),
-    themeCards: document.querySelectorAll('.theme-card'),
-    accentColorInput: document.getElementById('accent-color-input'),
-    accentHexLabel: document.getElementById('accent-hex-label'),
-    accentColor2Input: document.getElementById('accent-color-2-input'),
-    accentHex2Label: document.getElementById('accent-hex-2-label'),
-    gradientPreviewBadge: document.getElementById('gradient-preview-badge'),
-    wallpaperCards: document.querySelectorAll('.wallpaper-card'),
-    wallpaperUploadInput: document.getElementById('wallpaper-upload-input'),
-    sliderBlur: document.getElementById('slider-blur'),
-    sliderDarkness: document.getElementById('slider-darkness'),
-    blurVal: document.getElementById('blur-val'),
-    darknessVal: document.getElementById('darkness-val'),
-    btnClearAll: document.getElementById('btn-clear-all'),
+    dom.btnOpenCustomizer = document.getElementById('btn-open-customizer');
+    dom.btnCloseSettings = document.getElementById('btn-close-settings');
+    dom.settingsModal = document.getElementById('settings-modal');
+    dom.themeCards = document.querySelectorAll('.theme-card');
+    dom.accentColorInput = document.getElementById('accent-color-input');
+    dom.accentHexLabel = document.getElementById('accent-hex-label');
+    dom.accentColor2Input = document.getElementById('accent-color-2-input');
+    dom.accentHex2Label = document.getElementById('accent-hex-2-label');
+    dom.gradientPreviewBadge = document.getElementById('gradient-preview-badge');
+    dom.wallpaperCards = document.querySelectorAll('.wallpaper-card');
+    dom.wallpaperUploadInput = document.getElementById('wallpaper-upload-input');
+    dom.sliderBlur = document.getElementById('slider-blur');
+    dom.sliderDarkness = document.getElementById('slider-darkness');
+    dom.blurVal = document.getElementById('blur-val');
+    dom.darknessVal = document.getElementById('darkness-val');
+    dom.btnClearAll = document.getElementById('btn-clear-all');
 
     // Mini Weather Widget
-    weatherWidget: document.getElementById('weather-widget'),
-    weatherIcon: document.getElementById('weather-icon'),
-    weatherTemp: document.getElementById('weather-temp'),
-    weatherCity: document.getElementById('weather-city'),
-    weatherDesc: document.getElementById('weather-desc'),
+    dom.weatherWidget = document.getElementById('weather-widget');
+    dom.weatherIcon = document.getElementById('weather-icon');
+    dom.weatherTemp = document.getElementById('weather-temp');
+    dom.weatherCity = document.getElementById('weather-city');
+    dom.weatherDesc = document.getElementById('weather-desc');
 
     // Quick Notes
-    btnNotesToggle: document.getElementById('btn-notes-toggle'),
-    notesWidget: document.getElementById('notes-widget'),
-    btnCloseNotes: document.getElementById('btn-close-notes'),
-    notesTextarea: document.getElementById('notes-textarea'),
-    notesStatus: document.getElementById('notes-status'),
-    btnClearNotes: document.getElementById('btn-clear-notes'),
+    dom.btnNotesToggle = document.getElementById('btn-notes-toggle');
+    dom.notesWidget = document.getElementById('notes-widget');
+    dom.btnCloseNotes = document.getElementById('btn-close-notes');
+    dom.notesTextarea = document.getElementById('notes-textarea');
+    dom.notesStatus = document.getElementById('notes-status');
+    dom.btnClearNotes = document.getElementById('btn-clear-notes');
 
     // Bookmark Modal
-    bookmarkModal: document.getElementById('bookmark-modal'),
-    bookmarkForm: document.getElementById('bookmark-form'),
-    modalTitle: document.getElementById('modal-title'),
-    btnCloseModal: document.getElementById('btn-close-modal'),
-    btnCancelModal: document.getElementById('btn-cancel-modal'),
-    bmId: document.getElementById('bm-id'),
-    bmUrl: document.getElementById('bm-url'),
-    bmTitle: document.getElementById('bm-title'),
-    bmPage: document.getElementById('bm-page'),
-    bmCategory: document.getElementById('bm-category'),
-    bmTags: document.getElementById('bm-tags'),
-    bmFavorite: document.getElementById('bm-favorite'),
-    btnAutoFill: document.getElementById('btn-auto-fill'),
+    dom.bookmarkModal = document.getElementById('bookmark-modal');
+    dom.bookmarkForm = document.getElementById('bookmark-form');
+    dom.modalTitle = document.getElementById('modal-title');
+    dom.btnCloseModal = document.getElementById('btn-close-modal');
+    dom.btnCancelModal = document.getElementById('btn-cancel-modal');
+    dom.bmId = document.getElementById('bm-id');
+    dom.bmUrl = document.getElementById('bm-url');
+    dom.bmTitle = document.getElementById('bm-title');
+    dom.bmPage = document.getElementById('bm-page');
+    dom.bmCategory = document.getElementById('bm-category');
+    dom.bmTags = document.getElementById('bm-tags');
+    dom.bmFavorite = document.getElementById('bm-favorite');
+    dom.btnAutoFill = document.getElementById('btn-auto-fill');
 
     // Custom Search Engine Modal
-    engineModal: document.getElementById('engine-modal'),
-    engineForm: document.getElementById('engine-form'),
-    btnCloseEngineModal: document.getElementById('btn-close-engine-modal'),
-    btnCancelEngineModal: document.getElementById('btn-cancel-engine-modal'),
-    customEngName: document.getElementById('custom-eng-name'),
-    customEngUrl: document.getElementById('custom-eng-url'),
-    customEngIcon: document.getElementById('custom-eng-icon'),
+    dom.engineModal = document.getElementById('engine-modal');
+    dom.engineForm = document.getElementById('engine-form');
+    dom.btnCloseEngineModal = document.getElementById('btn-close-engine-modal');
+    dom.btnCancelEngineModal = document.getElementById('btn-cancel-engine-modal');
+    dom.customEngName = document.getElementById('custom-eng-name');
+    dom.customEngUrl = document.getElementById('custom-eng-url');
+    dom.customEngIcon = document.getElementById('custom-eng-icon');
 
     // Bug Report & Feedback Modal
-    btnReportBug: document.getElementById('btn-report-bug'),
-    bugModal: document.getElementById('bug-modal'),
-    bugForm: document.getElementById('bug-form'),
-    btnCloseBugModal: document.getElementById('btn-close-bug-modal'),
-    btnCancelBugModal: document.getElementById('btn-cancel-bug-modal'),
-    btnCopyDiagnostics: document.getElementById('btn-copy-diagnostics'),
-    bugType: document.getElementById('bug-type'),
-    bugTitle: document.getElementById('bug-title'),
-    bugDescription: document.getElementById('bug-description'),
-    bugDiagnostics: document.getElementById('bug-diagnostics'),
+    dom.btnReportBug = document.getElementById('btn-report-bug');
+    dom.bugModal = document.getElementById('bug-modal');
+    dom.bugForm = document.getElementById('bug-form');
+    dom.btnCloseBugModal = document.getElementById('btn-close-bug-modal');
+    dom.btnCancelBugModal = document.getElementById('btn-cancel-bug-modal');
+    dom.btnCopyDiagnostics = document.getElementById('btn-copy-diagnostics');
+    dom.bugType = document.getElementById('bug-type');
+    dom.bugTitle = document.getElementById('bug-title');
+    dom.bugDescription = document.getElementById('bug-description');
+    dom.bugDiagnostics = document.getElementById('bug-diagnostics');
 
-    toast: document.getElementById('toast')
-  };
+    dom.toast = document.getElementById('toast');
+  }
+
+  // Initial population
+  populateDom();
 
   // =========================================================================
   // 3. SEARCH ENGINES & CONFIGURATION
@@ -315,7 +324,7 @@
       dom.btnEngineTrigger.title = `${config.name}${engineKey === 'google' ? ' (Default)' : ''} • Click to switch`;
     }
     if (dom.searchInput && state.searchMode === 'web') {
-      dom.searchInput.placeholder = `Search ${config.name} or type URL... (Press / to focus)`;
+      dom.searchInput.placeholder = 'Search or enter URL';
     }
     if (dom.modeWeb) {
       dom.modeWeb.textContent = config.name || 'Google';
@@ -478,12 +487,15 @@
         <span class="engine-default-badge">Default</span>
       </div>
     `;
-    googleItem.querySelector('.drawer-engine-info').addEventListener('click', () => {
-      setSearchEngine('google');
-      renderDrawerEngineList();
-      showToast('Switched to Google (Default)');
-    });
-    dom.drawerEngineList.appendChild(googleItem);
+    const googleInfo = googleItem.querySelector('.drawer-engine-info');
+    if (googleInfo) {
+      googleInfo.addEventListener('click', () => {
+        setSearchEngine('google');
+        renderDrawerEngineList();
+        showToast('Switched to Google (Default)');
+      });
+    }
+    if (dom.drawerEngineList) dom.drawerEngineList.appendChild(googleItem);
 
     // 2. Built-in engines (that haven't been removed)
     Object.keys(SEARCH_ENGINES).forEach(key => {
@@ -502,19 +514,24 @@
         <button type="button" class="ghost-btn xs danger" style="padding: 2px 7px;" title="Remove ${escapeHtml(eng.name)}">Delete</button>
       `;
 
-      item.querySelector('.drawer-engine-info').addEventListener('click', () => {
-        setSearchEngine(key);
-        renderDrawerEngineList();
-        showToast(`Switched to ${eng.name}`);
-      });
+      const info = item.querySelector('.drawer-engine-info');
+      if (info) {
+        info.addEventListener('click', () => {
+          setSearchEngine(key);
+          renderDrawerEngineList();
+          showToast(`Switched to ${eng.name}`);
+        });
+      }
 
       const delBtn = item.querySelector('button');
-      delBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        removeEngine(key, false);
-      });
+      if (delBtn) {
+        delBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          removeEngine(key, false);
+        });
+      }
 
-      dom.drawerEngineList.appendChild(item);
+      if (dom.drawerEngineList) dom.drawerEngineList.appendChild(item);
     });
 
     // 3. Custom search engines
@@ -535,19 +552,24 @@
           <button type="button" class="ghost-btn xs danger" style="padding: 2px 7px;" title="Delete ${escapeHtml(custom.name)}">Delete</button>
         `;
 
-        item.querySelector('.drawer-engine-info').addEventListener('click', () => {
-          setSearchEngine(custom.id);
-          renderDrawerEngineList();
-          showToast(`Switched to ${custom.name}`);
-        });
+        const info = item.querySelector('.drawer-engine-info');
+        if (info) {
+          info.addEventListener('click', () => {
+            setSearchEngine(custom.id);
+            renderDrawerEngineList();
+            showToast(`Switched to ${custom.name}`);
+          });
+        }
 
         const delBtn = item.querySelector('button');
-        delBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          removeEngine(custom.id, true);
-        });
+        if (delBtn) {
+          delBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            removeEngine(custom.id, true);
+          });
+        }
 
-        dom.drawerEngineList.appendChild(item);
+        if (dom.drawerEngineList) dom.drawerEngineList.appendChild(item);
       });
     }
 
@@ -555,7 +577,7 @@
     const builtInOthers = Object.keys(SEARCH_ENGINES).filter(k => k !== 'google');
     const remainingBuiltIns = builtInOthers.filter(k => !state.removedEngines.includes(k));
     const customCount = (state.customEngines || []).length;
-    if (remainingBuiltIns.length === 0 && customCount === 0) {
+    if (remainingBuiltIns.length === 0 && customCount === 0 && dom.drawerEngineList) {
       const note = document.createElement('div');
       note.style.cssText = 'font-size: 0.75rem; color: var(--text-muted); font-style: italic; padding: 6px 0; text-align: center;';
       note.textContent = 'Only Google (Default) is enabled. Click "Add Engine" or "Restore Default Engines" to add more.';
@@ -564,6 +586,7 @@
   }
 
   function init() {
+    populateDom();
     loadSettings(function () {
       initClockAndGreeting();
       initWeather();
@@ -603,6 +626,7 @@
       'customEngines',
       'removedEngines',
       'quickNotes',
+      'notesPosition',
       'timeFormat',
       'weatherUnit',
       'weatherCache',
@@ -679,6 +703,10 @@
         state.quickNotes = data.quickNotes;
         if (dom.notesTextarea) dom.notesTextarea.value = data.quickNotes;
       }
+      if (data.notesPosition && typeof data.notesPosition.x === 'number' && typeof data.notesPosition.y === 'number') {
+        state.notesPosition = data.notesPosition;
+        applyNotesPosition(data.notesPosition.x, data.notesPosition.y);
+      }
       if (data.quickAccessMode) {
         state.quickAccessMode = data.quickAccessMode;
       }
@@ -687,11 +715,18 @@
       } else {
         state.recentSites = [];
       }
-      if (data.customBoards && Array.isArray(data.customBoards) && data.customBoards.length > 0) {
-        state.customBoards = data.customBoards;
+      if (data.customBoards && Array.isArray(data.customBoards)) {
+        state.customBoards = data.customBoards.filter(b => {
+          if (!b || b === 'kk' || b === 'kl') return false;
+          if (b === 'Other bookmarks') {
+            return Array.isArray(state.bookmarks) && state.bookmarks.some(bm => bm.category === 'Other bookmarks');
+          }
+          return true;
+        });
       } else {
-        state.customBoards = ['Other bookmarks', 'kk', 'kl'];
+        state.customBoards = [];
       }
+      storage.set({ customBoards: state.customBoards });
       if (Array.isArray(data.customTopSites)) {
         state.customTopSites = data.customTopSites;
       } else {
@@ -938,27 +973,72 @@
 
   function applyWallpaper(wpKey, customData) {
     state.wallpaper = wpKey;
-    dom.bgImage.className = 'bg-image'; // reset classes
+    if (customData !== undefined) {
+      state.customWallpaperData = customData;
+    }
+    if (dom.bgImage) dom.bgImage.className = 'bg-image'; // reset classes
 
-    if (wpKey && wpKey.startsWith('live-')) {
-      // Live Animated Wallpaper Mode
-      dom.bgImage.style.backgroundImage = 'none';
+    // Helper to stop and hide custom video
+    function stopCustomVideo() {
+      if (dom.bgVideo) {
+        dom.bgVideo.pause();
+        dom.bgVideo.removeAttribute('src');
+        dom.bgVideo.load();
+        dom.bgVideo.classList.add('hidden');
+      }
+    }
+
+    if (wpKey === 'none') {
+      stopLiveWallpaper();
+      stopCustomVideo();
+      if (dom.liveCanvas) dom.liveCanvas.classList.add('hidden');
+      if (dom.bgImage) {
+        dom.bgImage.style.backgroundImage = 'none';
+        dom.bgImage.style.backgroundColor = 'var(--bg-primary)';
+      }
+    } else if (wpKey && wpKey.startsWith('live-')) {
+      // Built-in Live Canvas Animated Wallpaper Mode
+      stopCustomVideo();
+      if (dom.bgImage) dom.bgImage.style.backgroundImage = 'none';
       if (dom.liveCanvas) {
         dom.liveCanvas.classList.remove('hidden');
         startLiveWallpaper(wpKey);
       }
-    } else {
-      // Static or Gradient Wallpaper Mode
+    } else if (wpKey === 'custom' && (customData || state.customWallpaperData)) {
       stopLiveWallpaper();
+      if (dom.liveCanvas) dom.liveCanvas.classList.add('hidden');
+      const dataUri = customData || state.customWallpaperData;
+      const isVideo = typeof dataUri === 'string' && (
+        dataUri.startsWith('data:video/') || 
+        dataUri.endsWith('.mp4') || 
+        dataUri.endsWith('.webm')
+      );
+
+      if (isVideo && dom.bgVideo) {
+        if (dom.bgImage) dom.bgImage.style.backgroundImage = 'none';
+        dom.bgVideo.classList.remove('hidden');
+        if (dom.bgVideo.src !== dataUri) {
+          dom.bgVideo.src = dataUri;
+          dom.bgVideo.load();
+        }
+        dom.bgVideo.play().catch(() => {});
+      } else {
+        stopCustomVideo();
+        if (dom.bgImage) dom.bgImage.style.backgroundImage = `url(${dataUri})`;
+      }
+    } else {
+      // Static preset or Gradient Wallpaper Mode
+      stopLiveWallpaper();
+      stopCustomVideo();
       if (dom.liveCanvas) {
         dom.liveCanvas.classList.add('hidden');
       }
-      if (wpKey === 'custom' && customData) {
-        dom.bgImage.style.backgroundImage = `url(${customData})`;
-      } else if (wpKey && wpKey.startsWith('gradient-')) {
+      if (wpKey && wpKey.startsWith('gradient-')) {
         const gradient = GRADIENT_WALLPAPERS[wpKey] || GRADIENT_WALLPAPERS['gradient-cosmic'];
-        dom.bgImage.style.backgroundImage = gradient;
-        dom.bgImage.classList.add(wpKey);
+        if (dom.bgImage) {
+          dom.bgImage.style.backgroundImage = gradient;
+          dom.bgImage.classList.add(wpKey);
+        }
       } else {
         // Local preset image: aurora, sunset, cyberpunk
         const imgMap = {
@@ -967,15 +1047,23 @@
           cyberpunk: 'assets/wallpapers/cyberpunk.jpg'
         };
         const path = imgMap[wpKey] || imgMap.aurora;
-        dom.bgImage.style.backgroundImage = `url(${path})`;
+        if (dom.bgImage) dom.bgImage.style.backgroundImage = `url(${path})`;
       }
     }
 
-    dom.wallpaperCards.forEach(card => {
-      card.classList.toggle('active', card.dataset.wp === wpKey);
-    });
+    if (dom.wallpaperCards) {
+      dom.wallpaperCards.forEach(card => {
+        card.classList.toggle('active', card.dataset.wp === wpKey);
+      });
+    }
 
-    storage.set({ wallpaper: wpKey, customWallpaperData: customData });
+    if (dom.customWallpaperActions) {
+      dom.customWallpaperActions.classList.toggle('hidden', wpKey !== 'custom' && !state.customWallpaperData);
+    }
+
+    const payload = { wallpaper: wpKey };
+    if (customData !== undefined) payload.customWallpaperData = customData;
+    storage.set(payload);
   }
 
   // =========================================================================
@@ -1270,13 +1358,9 @@
   }
 
   function applyLayout(layout) {
-    state.currentLayout = layout;
-    document.body.setAttribute('data-layout', layout);
-    if (dom.layoutCards) dom.layoutCards.classList.toggle('active', layout === 'cards');
-    if (dom.layoutBoard) dom.layoutBoard.classList.toggle('active', layout === 'board');
-    if (dom.layoutCompact) dom.layoutCompact.classList.toggle('active', layout === 'compact');
-    if (dom.layoutList) dom.layoutList.classList.toggle('active', layout === 'list');
-    storage.set({ currentLayout: layout });
+    state.currentLayout = 'board';
+    document.body.setAttribute('data-layout', 'board');
+    storage.set({ currentLayout: 'board' });
     renderBookmarks();
   }
 
@@ -1313,27 +1397,20 @@
     window.location.href = config.url + encodeURIComponent(query);
   }
 
-  // Live Auto-complete / Search Suggestions
-  let debounceTimer = null;
+  // Search Input Handler (Clean search without intrusive auto-suggestions)
   function handleSearchInput(e) {
     const query = e.target.value.trim();
-    dom.btnClearSearch.classList.toggle('hidden', query.length === 0);
+    if (dom.btnClearSearch) dom.btnClearSearch.classList.toggle('hidden', query.length === 0);
 
     if (state.searchMode === 'bookmarks') {
       filterBookmarks(query);
       return;
     }
 
-    clearTimeout(debounceTimer);
-    if (!query) {
+    if (dom.searchSuggestions) {
       dom.searchSuggestions.classList.add('hidden');
       dom.searchSuggestions.innerHTML = '';
-      return;
     }
-
-    debounceTimer = setTimeout(() => {
-      generateSuggestions(query);
-    }, 180);
   }
 
   function generateSuggestions(query) {
@@ -1394,6 +1471,8 @@
 
   // Voice Search (Web Speech API)
   function initVoiceSearch() {
+    if (!dom.btnVoiceSearch) return;
+
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
     if (!SpeechRecognition) {
       dom.btnVoiceSearch.title = 'Voice search not supported in this browser';
@@ -1419,7 +1498,7 @@
 
     recognition.onresult = (event) => {
       const speechResult = event.results[0][0].transcript;
-      dom.searchInput.value = speechResult;
+      if (dom.searchInput) dom.searchInput.value = speechResult;
       dom.btnVoiceSearch.classList.remove('listening');
       handleSearchSubmit(new Event('submit'));
     };
@@ -1439,16 +1518,23 @@
   // =========================================================================
   function togglePrivacyMode(force) {
     state.privacyMode = typeof force === 'boolean' ? force : !state.privacyMode;
+    const toggleCheckbox = document.getElementById('toggle-privacy-mode');
+    if (toggleCheckbox) toggleCheckbox.checked = !!state.privacyMode;
+
     if (state.privacyMode) {
       document.body.classList.add('privacy-mode');
-      if (dom.btnPrivacyToggle) dom.btnPrivacyToggle.classList.add('active');
+      if (dom.btnPrivacyToggle) {
+        dom.btnPrivacyToggle.classList.add('active');
+        dom.btnPrivacyToggle.title = 'Privacy Mode Active (Bookmarks Hidden - Click to Unhide)';
+      }
       if (dom.privacyBanner) dom.privacyBanner.classList.remove('hidden');
-      showToast('Privacy Mode Enabled: Bookmarks blurred for screen sharing');
     } else {
       document.body.classList.remove('privacy-mode');
-      if (dom.btnPrivacyToggle) dom.btnPrivacyToggle.classList.remove('active');
+      if (dom.btnPrivacyToggle) {
+        dom.btnPrivacyToggle.classList.remove('active');
+        dom.btnPrivacyToggle.title = 'Privacy Mode (Click to Hide/Blur Bookmarks)';
+      }
       if (dom.privacyBanner) dom.privacyBanner.classList.add('hidden');
-      showToast('Privacy Mode Disabled');
     }
     storage.set({ privacyMode: state.privacyMode });
   }
@@ -2177,7 +2263,7 @@
       <div class="qa-item" data-url="${escapeHtml(url)}" title="${escapeHtml(item.title || url)}">
         <button type="button" class="qa-remove-btn" data-url="${escapeHtml(url)}" title="Remove ${escapeHtml(rawTitle)}" aria-label="Remove ${escapeHtml(rawTitle)}">&times;</button>
         <a href="${escapeHtml(url)}" class="qa-squircle" target="_blank" rel="noopener noreferrer">
-          <img class="qa-icon" src="${escapeHtml(faviconUrl)}" alt="${escapeHtml(initial)}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+          <img class="qa-icon" src="${escapeHtml(faviconUrl)}" alt="${escapeHtml(initial)}" loading="lazy">
           <span class="qa-fallback-initial" style="display:none;">${escapeHtml(initial)}</span>
         </a>
         <span class="qa-name">${escapeHtml(rawTitle)}</span>
@@ -2570,16 +2656,30 @@
     if (!dom.lumilistBoard) return;
     dom.lumilistBoard.innerHTML = '';
 
-    // Collect all boards: customBoards plus any categories from bookmarks
-    const boardSet = new Set(state.customBoards || ['Other bookmarks', 'Work', 'Personal']);
+    // Collect all boards: customBoards plus categories from existing bookmarks in list
+    const boardSet = new Set();
     list.forEach(bm => {
-      const cat = bm.category || 'Other bookmarks';
-      boardSet.add(cat);
+      const cat = (bm.category || '').trim();
+      if (cat && cat !== 'kk' && cat !== 'kl') {
+        boardSet.add(cat);
+      }
+    });
+    (state.customBoards || []).forEach(b => {
+      const cat = (b || '').trim();
+      if (cat && cat !== 'kk' && cat !== 'kl') {
+        boardSet.add(cat);
+      }
     });
     const allBoards = Array.from(boardSet);
 
+    if (allBoards.length === 0) {
+      if (dom.emptyState) dom.emptyState.classList.remove('hidden');
+      return;
+    }
+    if (dom.emptyState) dom.emptyState.classList.add('hidden');
+
     allBoards.forEach(boardName => {
-      const colBookmarks = list.filter(b => (b.category || 'Other bookmarks') === boardName);
+      const colBookmarks = list.filter(b => (b.category || 'General') === boardName);
       const card = document.createElement('div');
       card.className = 'keep-board-card';
       card.setAttribute('data-board', boardName);
@@ -2668,10 +2768,13 @@
         startRenaming();
       });
 
-      card.querySelector('.btn-board-edit').addEventListener('click', (e) => {
-        e.stopPropagation();
-        startRenaming();
-      });
+      const editBtn = card.querySelector('.btn-board-edit');
+      if (editBtn) {
+        editBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          startRenaming();
+        });
+      }
 
       // Populate bookmark items inside this board
       colBookmarks.forEach(bm => {
@@ -2685,7 +2788,7 @@
 
         row.innerHTML = `
           <a href="${escapeHtml(bm.url)}" class="keep-item-link" title="${escapeHtml(bm.title || bm.url)}" target="_blank" rel="noopener noreferrer">
-            <img class="keep-item-favicon" src="${escapeHtml(faviconUrl)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';">
+            <img class="keep-item-favicon" src="${escapeHtml(faviconUrl)}" alt="">
             <span class="keep-fallback-initial" style="display:none;">${escapeHtml(initial)}</span>
             <span class="keep-item-title">${escapeHtml(bm.title || getDomain(bm.url))}</span>
           </a>
@@ -2701,22 +2804,30 @@
 
         // Item click navigation
         const link = row.querySelector('.keep-item-link');
-        link.addEventListener('click', (e) => {
-          e.preventDefault();
-          openBookmark(bm);
-        });
+        if (link) {
+          link.addEventListener('click', (e) => {
+            e.preventDefault();
+            openBookmark(bm);
+          });
+        }
 
         // Pin toggle
-        row.querySelector('.btn-pin').addEventListener('click', (e) => {
-          e.stopPropagation();
-          toggleFavorite(bm.id);
-        });
+        const pinBtn = row.querySelector('.btn-pin');
+        if (pinBtn) {
+          pinBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleFavorite(bm.id);
+          });
+        }
 
         // Delete bookmark
-        row.querySelector('.btn-del').addEventListener('click', (e) => {
-          e.stopPropagation();
-          deleteBookmark(bm.id);
-        });
+        const delBtn = row.querySelector('.btn-del');
+        if (delBtn) {
+          delBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            deleteBookmark(bm.id);
+          });
+        }
 
         // Drag & drop item row
         row.addEventListener('dragstart', (e) => {
@@ -2772,27 +2883,38 @@
       });
 
       // Board Header Actions
-      card.querySelector('.btn-board-add').addEventListener('click', (e) => {
-        e.stopPropagation();
-        openAddModalWithCategory(boardName);
-      });
+      const addBtn = card.querySelector('.btn-board-add');
+      if (addBtn) {
+        addBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openAddModalWithCategory(boardName);
+        });
+      }
 
-      card.querySelector('.btn-board-del').addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (confirm(`Delete board "${boardName}"? Any bookmarks in this board will be moved to Other bookmarks.`)) {
-          state.customBoards = (state.customBoards || []).filter(b => b !== boardName);
-          state.bookmarks.forEach(b => {
-            if (b.category === boardName) b.category = 'Other bookmarks';
-          });
-          storage.set({
-            customBoards: state.customBoards,
-            bookmarks: state.bookmarks
-          });
-          renderCategoryTabs();
-          renderBookmarks();
-          showToast(`Deleted board "${boardName}"`);
-        }
-      });
+      const delBoardBtn = card.querySelector('.btn-board-del');
+      if (delBoardBtn) {
+        delBoardBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const colBookmarks = state.bookmarks.filter(b => (b.category || '') === boardName);
+          const confirmMsg = colBookmarks.length > 0 
+            ? `Delete board "${boardName}"? The ${colBookmarks.length} bookmark(s) in this board will be moved to General.`
+            : `Delete board "${boardName}"?`;
+
+          if (confirm(confirmMsg)) {
+            state.customBoards = (state.customBoards || []).filter(b => b !== boardName);
+            state.bookmarks.forEach(b => {
+              if (b.category === boardName) b.category = 'General';
+            });
+            storage.set({
+              customBoards: state.customBoards,
+              bookmarks: state.bookmarks
+            });
+            renderCategoryTabs();
+            renderBookmarks();
+            showToast(`Deleted board "${boardName}"`);
+          }
+        });
+      }
 
       // Board Reordering Drag & Drop
       card.addEventListener('dragstart', (e) => {
@@ -2911,24 +3033,28 @@
       showToast(`Board "${name}" created!`);
     }
 
-    normalState.addEventListener('click', openAddBoardInput);
-    btnConfirm.addEventListener('click', submitNewBoard);
-    btnCancel.addEventListener('click', (e) => {
-      e.stopPropagation();
-      closeAddBoardInput();
-    });
-
-    textInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        submitNewBoard();
-      } else if (e.key === 'Escape') {
-        e.preventDefault();
+    if (normalState) normalState.addEventListener('click', openAddBoardInput);
+    if (btnConfirm) btnConfirm.addEventListener('click', submitNewBoard);
+    if (btnCancel) {
+      btnCancel.addEventListener('click', (e) => {
+        e.stopPropagation();
         closeAddBoardInput();
-      }
-    });
+      });
+    }
 
-    dom.lumilistBoard.appendChild(addBoardCard);
+    if (textInput) {
+      textInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          submitNewBoard();
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          closeAddBoardInput();
+        }
+      });
+    }
+
+    if (dom.lumilistBoard) dom.lumilistBoard.appendChild(addBoardCard);
   }
 
   function openAddModalWithCategory(cat) {
@@ -3019,8 +3145,10 @@
     dom.bmId.value = '';
     dom.bmUrl.value = '';
     dom.bmTitle.value = '';
+    if (dom.bmTitle) delete dom.bmTitle.dataset.autofilled;
+    if (dom.bmTags) delete dom.bmTags.dataset.autofilled;
     if (dom.bmPage) dom.bmPage.value = state.activePage || 'Personal';
-    dom.bmCategory.value = state.activeCategory !== 'All' && state.activeCategory !== 'Favorites' ? state.activeCategory : 'AI & LLMs';
+    dom.bmCategory.value = state.activeCategory !== 'All' && state.activeCategory !== 'Favorites' ? state.activeCategory : 'General';
     dom.bmTags.value = '';
     dom.bmFavorite.checked = false;
     dom.bookmarkModal.classList.remove('hidden');
@@ -3104,16 +3232,73 @@
     if (!rawUrl) return;
     try {
       const url = rawUrl.startsWith('http') ? rawUrl : 'https://' + rawUrl;
-      const domain = getDomain(url);
-      const name = domain.split('.')[0];
-      const capitalized = name.charAt(0).toUpperCase() + name.slice(1);
-      if (!dom.bmTitle.value) {
-        dom.bmTitle.value = capitalized;
+      const parsedUrl = new URL(url);
+      const hostname = parsedUrl.hostname.replace(/^www\./i, '');
+      const parts = hostname.split('.');
+      const domainName = parts[0] || '';
+      
+      // Capitalize first letter or acronyms (e.g. github -> GitHub, youtube -> YouTube)
+      const specialNames = {
+        'github': 'GitHub',
+        'youtube': 'YouTube',
+        'linkedin': 'LinkedIn',
+        'stackoverflow': 'Stack Overflow',
+        'medium': 'Medium',
+        'reddit': 'Reddit',
+        'twitter': 'Twitter',
+        'facebook': 'Facebook',
+        'instagram': 'Instagram',
+        'chatgpt': 'ChatGPT',
+        'openai': 'OpenAI',
+        'claude': 'Claude',
+        'discord': 'Discord',
+        'notion': 'Notion',
+        'figma': 'Figma',
+        'twitch': 'Twitch',
+        'spotify': 'Spotify',
+        'netflix': 'Netflix',
+        'amazon': 'Amazon',
+        'wikipedia': 'Wikipedia',
+        'google': 'Google'
+      };
+
+      let capitalized = specialNames[domainName.toLowerCase()] || (domainName.charAt(0).toUpperCase() + domainName.slice(1));
+      
+      // If path has meaningful article/page title slug (e.g. /posts/my-cool-project)
+      const pathSegments = parsedUrl.pathname.split('/').filter(Boolean);
+      if (pathSegments.length > 0) {
+        const lastSlug = pathSegments[pathSegments.length - 1]
+          .replace(/[-_+]/g, ' ')
+          .replace(/\.(html|htm|php|aspx|jsp)$/i, '')
+          .trim();
+        if (lastSlug && lastSlug.length > 2 && isNaN(lastSlug)) {
+          const prettySlug = lastSlug.charAt(0).toUpperCase() + lastSlug.slice(1);
+          capitalized = `${capitalized} - ${prettySlug}`;
+        }
       }
-      // Auto-categorize based on domain and title
-      const detectedCat = detectCategory(url, dom.bmTitle.value || capitalized);
-      if (dom.bmCategory) {
-        dom.bmCategory.value = detectedCat;
+
+      // Auto-fill Title if empty or was previously auto-filled
+      if (!dom.bmTitle.value || dom.bmTitle.dataset.autofilled === 'true') {
+        dom.bmTitle.value = capitalized;
+        dom.bmTitle.dataset.autofilled = 'true';
+      }
+
+      // Auto-fill Tags from domain and path slug
+      if (dom.bmTags && (!dom.bmTags.value || dom.bmTags.dataset.autofilled === 'true')) {
+        const autoTags = [];
+        if (domainName && domainName.length > 2) autoTags.push(domainName.toLowerCase());
+        if (pathSegments[0] && pathSegments[0].length > 2 && isNaN(pathSegments[0])) {
+          autoTags.push(pathSegments[0].toLowerCase().replace(/[-_+]/g, ' '));
+        }
+        if (autoTags.length > 0) {
+          dom.bmTags.value = Array.from(new Set(autoTags)).join(', ');
+          dom.bmTags.dataset.autofilled = 'true';
+        }
+      }
+
+      // If URL wasn't formatted with protocol, format it nicely in input
+      if (!rawUrl.startsWith('http://') && !rawUrl.startsWith('https://')) {
+        dom.bmUrl.value = url;
       }
     } catch (e) {
       // ignore
@@ -3153,7 +3338,7 @@
             folderName === 'General' ||
             folderName.toLowerCase().includes('bookmark');
 
-          const category = isGeneric ? detectCategory(node.url, node.title) : folderName;
+          const category = (folderName && !isGeneric) ? folderName : 'General';
 
           nativeBookmarks.push({
             id: 'cloud-' + (node.id || Math.random().toString(36).substring(2)),
@@ -3305,13 +3490,12 @@
           const links = doc.querySelectorAll('a');
           links.forEach(a => {
             if (a.href) {
-              const detectedCat = detectCategory(a.href, a.textContent);
               imported.push({
                 id: 'imp-' + Math.random().toString(36).substring(2),
                 title: a.textContent.trim() || getDomain(a.href),
                 url: a.href,
                 page: state.activePage || 'Personal',
-                category: detectedCat || 'General',
+                category: 'General',
                 tags: 'imported',
                 favorite: false,
                 visits: 0
@@ -3325,9 +3509,9 @@
           let count = 0;
           imported.forEach(item => {
             if (item && item.url && isSafeUrl(item.url) && !existingUrls.has(item.url.toLowerCase())) {
-              const cat = (item.category && item.category !== 'Imported' && item.category !== 'General') 
+              const cat = (item.category && item.category !== 'Imported') 
                 ? String(item.category).slice(0, 100) 
-                : detectCategory(item.url, item.title);
+                : 'General';
               state.bookmarks.push({
                 id: (item.id && typeof item.id === 'string') ? item.id : ('imp-' + Date.now() + Math.random().toString(36).substring(2)),
                 title: String(item.title || getDomain(item.url)).slice(0, 300),
@@ -3358,101 +3542,13 @@
   }
 
   function autoCategorizeAll() {
-    if (!state.bookmarks || state.bookmarks.length === 0) {
-      showToast('No bookmarks to categorize! Add or import some first.');
-      return;
-    }
-
-    let modifiedCount = 0;
-    const catCounts = {};
-
-    state.bookmarks.forEach(bm => {
-      const detected = detectCategory(bm.url, bm.title);
-      if (detected && detected !== bm.category) {
-        bm.category = detected;
-        modifiedCount++;
-      }
-      catCounts[bm.category] = (catCounts[bm.category] || 0) + 1;
-    });
-
-    storage.set({ bookmarks: state.bookmarks });
-    renderPagesBar();
-    renderCategoryTabs();
-    renderBookmarks();
-
-    const uniqueCats = Object.keys(catCounts).length;
-    showToast(`Organized ${state.bookmarks.length} bookmarks into ${uniqueCats} categories! (${modifiedCount} updated)`);
+    showToast('Auto-categorization is disabled. Bookmarks keep your custom boards.');
   }
 
   // =========================================================================
-  // 13. INTELLIGENT AUTO-CATEGORIZATION ENGINE
+  // 13. INTELLIGENT AUTO-CATEGORIZATION ENGINE (DISABLED)
   // =========================================================================
   function detectCategory(rawUrl, rawTitle) {
-    const url = (rawUrl || '').toLowerCase();
-    const title = (rawTitle || '').toLowerCase();
-    let hostname = '';
-    try {
-      hostname = new URL(rawUrl.startsWith('http') ? rawUrl : 'https://' + rawUrl).hostname.replace(/^www\./, '');
-    } catch (e) {
-      hostname = url;
-    }
-
-    // 1. AI & LLMs
-    const aiDomains = ['openai.com', 'chatgpt.com', 'anthropic.com', 'claude.ai', 'huggingface.co', 'perplexity.ai', 'deepmind.google', 'midjourney.com', 'cursor.com', 'v0.dev', 'poe.com', 'replicate.com', 'mistral.ai', 'groq.com', 'elevenlabs.io', 'runwayml.com', 'stability.ai', 'cohere.com', 'ollama.com', 'claude.com'];
-    const aiKeywords = ['ai', 'llm', 'gpt', 'chatgpt', 'claude', 'gemini', 'prompt', 'neural', 'deep learning', 'machine learning', 'diffusion', 'copilot', 'agent'];
-    if (aiDomains.some(d => hostname.includes(d)) || aiKeywords.some(k => new RegExp('\\b' + k + '\\b', 'i').test(title) || url.includes('/' + k))) {
-      return 'AI & LLMs';
-    }
-
-    // 2. Dev & Code
-    const devDomains = ['github.com', 'gitlab.com', 'bitbucket.org', 'stackoverflow.com', 'stackexchange.com', 'npmjs.com', 'npmjs.org', 'pypi.org', 'developer.mozilla.org', 'w3schools.com', 'docker.com', 'vercel.com', 'netlify.com', 'aws.amazon.com', 'console.cloud.google.com', 'firebase.google.com', 'react.dev', 'vuejs.org', 'angular.dev', 'nextjs.org', 'typescriptlang.org', 'python.org', 'rust-lang.org', 'golang.org', 'leetcode.com', 'codepen.io', 'jsfiddle.net', 'codesandbox.io', 'replit.com', 'geeksforgeeks.org', 'css-tricks.com', 'dev.to', 'gist.github.com'];
-    const devKeywords = ['github', 'api', 'repository', 'sdk', 'documentation', 'docs', 'compiler', 'debug', 'frontend', 'backend', 'fullstack', 'database', 'sql', 'json', 'webhook', 'cli'];
-    if (devDomains.some(d => hostname.includes(d)) || devKeywords.some(k => new RegExp('\\b' + k + '\\b', 'i').test(title) || url.includes('/' + k))) {
-      return 'Dev & Code';
-    }
-
-    // 3. Social & Chat
-    const socialDomains = ['x.com', 'twitter.com', 'reddit.com', 'discord.com', 'telegram.org', 't.me', 'slack.com', 'linkedin.com', 'instagram.com', 'threads.net', 'facebook.com', 'whatsapp.com', 'tiktok.com', 'mastodon.social', 'bsky.app', 'pinterest.com', 'snapchat.com', 'tumblr.com'];
-    const socialKeywords = ['social', 'community', 'forum', 'discussion', 'subreddit', 'tweet', 'feed'];
-    if (socialDomains.some(d => hostname.includes(d)) || socialKeywords.some(k => new RegExp('\\b' + k + '\\b', 'i').test(title))) {
-      return 'Social & Chat';
-    }
-
-    // 4. Productivity & Work
-    const prodDomains = ['notion.so', 'figma.com', 'trello.com', 'linear.app', 'jira.atlassian.com', 'atlassian.com', 'canva.com', 'docs.google.com', 'sheets.google.com', 'drive.google.com', 'slides.google.com', 'miro.com', 'airtable.com', 'zoom.us', 'cal.com', 'calendly.com', 'asana.com', 'loom.com', 'coda.io', 'clickup.com', 'monday.com', 'basecamp.com', 'evernote.com', 'todoist.com', 'dropbox.com'];
-    const prodKeywords = ['workspace', 'task', 'project', 'kanban', 'spreadsheet', 'tracker', 'calendar', 'meeting', 'crm', 'workflow'];
-    if (prodDomains.some(d => hostname.includes(d)) || prodKeywords.some(k => new RegExp('\\b' + k + '\\b', 'i').test(title))) {
-      return 'Productivity';
-    }
-
-    // 5. Media & Video
-    const mediaDomains = ['youtube.com', 'youtu.be', 'netflix.com', 'spotify.com', 'twitch.tv', 'vimeo.com', 'primevideo.com', 'soundcloud.com', 'disneyplus.com', 'hulu.com', 'hbomax.com', 'music.apple.com', 'podcasts.google.com', 'dailymotion.com', 'crunchyroll.com', 'bandcamp.com', 'imdb.com'];
-    const mediaKeywords = ['watch', 'video', 'movie', 'film', 'music', 'album', 'podcast', 'stream', 'episode', 'series', 'track'];
-    if (mediaDomains.some(d => hostname.includes(d)) || mediaKeywords.some(k => new RegExp('\\b' + k + '\\b', 'i').test(title))) {
-      return 'Media & Video';
-    }
-
-    // 6. News & Reading
-    const newsDomains = ['medium.com', 'substack.com', 'news.ycombinator.com', 'theverge.com', 'wired.com', 'techcrunch.com', 'bloomberg.com', 'bbc.com', 'reuters.com', 'nytimes.com', 'theguardian.com', 'arstechnica.com', 'engadget.com', 'mashable.com', 'forbes.com', 'wsj.com', 'hackernews.com', 'slashdot.org'];
-    const newsKeywords = ['news', 'article', 'journal', 'headline', 'daily', 'editorial', 'newsletter', 'report', 'digest'];
-    if (newsDomains.some(d => hostname.includes(d)) || newsKeywords.some(k => new RegExp('\\b' + k + '\\b', 'i').test(title))) {
-      return 'News & Reading';
-    }
-
-    // 7. Shopping & Finance
-    const shopDomains = ['amazon.com', 'ebay.com', 'walmart.com', 'aliexpress.com', 'etsy.com', 'target.com', 'stripe.com', 'paypal.com', 'binance.com', 'coinbase.com', 'robinhood.com', 'tradingview.com', 'investing.com', 'coingecko.com', 'coinmarketcap.com', 'chase.com', 'bankofamerica.com', 'shopify.com'];
-    const shopKeywords = ['shop', 'store', 'cart', 'buy', 'checkout', 'price', 'deals', 'discount', 'crypto', 'bitcoin', 'ethereum', 'stock', 'forex', 'portfolio', 'finance', 'banking'];
-    if (shopDomains.some(d => hostname.includes(d)) || shopKeywords.some(k => new RegExp('\\b' + k + '\\b', 'i').test(title))) {
-      return 'Shopping & Finance';
-    }
-
-    // 8. Design & Creative
-    const designDomains = ['dribbble.com', 'behance.net', 'unsplash.com', 'pexels.com', 'fontawesome.com', 'icons8.com', 'coolors.co', 'svgrepo.com', 'flaticon.com', 'freepik.com', 'fonts.google.com', 'colorhunt.co', 'typewolf.com', 'mobbin.com', 'awwwards.com'];
-    const designKeywords = ['design', 'ui', 'ux', 'vector', 'palette', 'typography', 'font', 'icon', 'illustration', 'mockup', 'artwork', 'graphic'];
-    if (designDomains.some(d => hostname.includes(d)) || designKeywords.some(k => new RegExp('\\b' + k + '\\b', 'i').test(title))) {
-      return 'Design & Creative';
-    }
-
     return 'General';
   }
 
@@ -3467,7 +3563,7 @@
   }
 
   // =========================================================================
-  // 14. QUICK NOTES SCRATCHPAD
+  // 14. QUICK NOTES SCRATCHPAD & STICKY NOTE MOBILITY
   // =========================================================================
   let notesSaveTimer = null;
   function handleNotesInput() {
@@ -3478,6 +3574,125 @@
       storage.set({ quickNotes: val });
       dom.notesStatus.textContent = 'Saved';
     }, 400);
+  }
+
+  function applyNotesPosition(x, y) {
+    if (!dom.notesWidget) return;
+    const widgetWidth = dom.notesWidget.offsetWidth || 320;
+    const widgetHeight = dom.notesWidget.offsetHeight || 220;
+    const maxX = Math.max(10, window.innerWidth - widgetWidth - 10);
+    const maxY = Math.max(10, window.innerHeight - widgetHeight - 10);
+    const safeX = Math.max(10, Math.min(x, maxX));
+    const safeY = Math.max(10, Math.min(y, maxY));
+
+    dom.notesWidget.style.left = safeX + 'px';
+    dom.notesWidget.style.top = safeY + 'px';
+    dom.notesWidget.style.right = 'auto';
+    dom.notesWidget.style.bottom = 'auto';
+  }
+
+  function initNotesMobility() {
+    const header = document.getElementById('notes-widget-header') || (dom.notesWidget && dom.notesWidget.querySelector('.widget-header'));
+    if (!header || !dom.notesWidget) return;
+
+    let isDragging = false;
+    let startMouseX = 0;
+    let startMouseY = 0;
+    let startWidgetX = 0;
+    let startWidgetY = 0;
+
+    function onPointerDown(e) {
+      if (e.target.closest('#btn-close-notes') || e.target.closest('button')) return;
+
+      isDragging = true;
+      dom.notesWidget.classList.add('is-dragging');
+
+      const rect = dom.notesWidget.getBoundingClientRect();
+      startWidgetX = rect.left;
+      startWidgetY = rect.top;
+
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      startMouseX = clientX;
+      startMouseY = clientY;
+
+      dom.notesWidget.style.left = startWidgetX + 'px';
+      dom.notesWidget.style.top = startWidgetY + 'px';
+      dom.notesWidget.style.right = 'auto';
+      dom.notesWidget.style.bottom = 'auto';
+
+      document.addEventListener('mousemove', onPointerMove);
+      document.addEventListener('mouseup', onPointerUp);
+      document.addEventListener('touchmove', onPointerMove, { passive: false });
+      document.addEventListener('touchend', onPointerUp);
+
+      if (e.cancelable && e.type !== 'touchstart') e.preventDefault();
+    }
+
+    function onPointerMove(e) {
+      if (!isDragging) return;
+
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+      const deltaX = clientX - startMouseX;
+      const deltaY = clientY - startMouseY;
+
+      let newX = startWidgetX + deltaX;
+      let newY = startWidgetY + deltaY;
+
+      const widgetWidth = dom.notesWidget.offsetWidth || 320;
+      const widgetHeight = dom.notesWidget.offsetHeight || 220;
+
+      const minX = 10;
+      const maxX = Math.max(10, window.innerWidth - widgetWidth - 10);
+      const minY = 10;
+      const maxY = Math.max(10, window.innerHeight - widgetHeight - 10);
+
+      newX = Math.max(minX, Math.min(newX, maxX));
+      newY = Math.max(minY, Math.min(newY, maxY));
+
+      dom.notesWidget.style.left = newX + 'px';
+      dom.notesWidget.style.top = newY + 'px';
+
+      if (e.cancelable) e.preventDefault();
+    }
+
+    function onPointerUp() {
+      if (!isDragging) return;
+      isDragging = false;
+      dom.notesWidget.classList.remove('is-dragging');
+
+      document.removeEventListener('mousemove', onPointerMove);
+      document.removeEventListener('mouseup', onPointerUp);
+      document.removeEventListener('touchmove', onPointerMove);
+      document.removeEventListener('touchend', onPointerUp);
+
+      const rect = dom.notesWidget.getBoundingClientRect();
+      state.notesPosition = { x: Math.round(rect.left), y: Math.round(rect.top) };
+      storage.set({ notesPosition: state.notesPosition });
+    }
+
+    header.addEventListener('mousedown', onPointerDown);
+    header.addEventListener('touchstart', onPointerDown, { passive: false });
+
+    // Double click header to snap back to default bottom-right
+    header.addEventListener('dblclick', (e) => {
+      if (e.target.closest('#btn-close-notes')) return;
+      dom.notesWidget.style.left = 'auto';
+      dom.notesWidget.style.top = 'auto';
+      dom.notesWidget.style.right = '28px';
+      dom.notesWidget.style.bottom = '24px';
+      state.notesPosition = null;
+      storage.set({ notesPosition: null });
+      showToast('Sticky note snapped to corner');
+    });
+
+    window.addEventListener('resize', () => {
+      if (state.notesPosition) {
+        applyNotesPosition(state.notesPosition.x, state.notesPosition.y);
+      }
+    });
   }
 
   // =========================================================================
@@ -3548,7 +3763,7 @@
   // =========================================================================
   function openAddEngineModal() {
     if (dom.enginePopover) dom.enginePopover.classList.add('hidden');
-    if (dom.customizerDrawer) dom.customizerDrawer.classList.add('hidden');
+    if (dom.settingsModal) dom.settingsModal.classList.add('hidden');
     if (dom.customEngName) dom.customEngName.value = '';
     if (dom.customEngUrl) dom.customEngUrl.value = '';
     if (dom.customEngIcon) dom.customEngIcon.value = '';
@@ -3625,7 +3840,7 @@
   }
 
   function openBugModal() {
-    if (dom.customizerDrawer) dom.customizerDrawer.classList.add('hidden');
+    if (dom.settingsModal) dom.settingsModal.classList.add('hidden');
     if (dom.bugTitle) dom.bugTitle.value = '';
     if (dom.bugDescription) dom.bugDescription.value = '';
     if (dom.bugType) dom.bugType.selectedIndex = 0;
@@ -3689,17 +3904,19 @@
   // =========================================================================
   function setupEventListeners() {
     // Search Events
-    dom.searchForm.addEventListener('submit', handleSearchSubmit);
-    dom.searchInput.addEventListener('input', handleSearchInput);
-    dom.btnClearSearch.addEventListener('click', () => {
-      dom.searchInput.value = '';
-      dom.btnClearSearch.classList.add('hidden');
-      dom.searchSuggestions.classList.add('hidden');
-      if (state.searchMode === 'bookmarks') {
-        filterBookmarks('');
-      }
-      dom.searchInput.focus();
-    });
+    if (dom.searchForm) dom.searchForm.addEventListener('submit', handleSearchSubmit);
+    if (dom.searchInput) dom.searchInput.addEventListener('input', handleSearchInput);
+    if (dom.btnClearSearch) {
+      dom.btnClearSearch.addEventListener('click', () => {
+        if (dom.searchInput) dom.searchInput.value = '';
+        dom.btnClearSearch.classList.add('hidden');
+        if (dom.searchSuggestions) dom.searchSuggestions.classList.add('hidden');
+        if (state.searchMode === 'bookmarks') {
+          filterBookmarks('');
+        }
+        if (dom.searchInput) dom.searchInput.focus();
+      });
+    }
 
     // Engine Picker (Trigger Button)
     if (dom.btnEngineTrigger) {
@@ -3749,15 +3966,12 @@
         state.searchMode = 'web';
         dom.modeWeb.classList.add('active');
         if (dom.modeBookmarks) dom.modeBookmarks.classList.remove('active');
-        const eng = getEngineConfig(state.searchEngine);
-        dom.searchInput.placeholder = `Search ${eng.name} or type URL... (Press / to focus)`;
+        if (dom.searchInput) dom.searchInput.placeholder = 'Search or enter URL';
         if (state.searchQuery) {
           filterBookmarks('');
         }
-        if (dom.searchInput.value.trim()) {
-          generateSuggestions(dom.searchInput.value.trim());
-        }
-        dom.searchInput.focus();
+        if (dom.searchSuggestions) dom.searchSuggestions.classList.add('hidden');
+        if (dom.searchInput) dom.searchInput.focus();
       });
     }
 
@@ -3766,12 +3980,12 @@
         state.searchMode = 'bookmarks';
         dom.modeBookmarks.classList.add('active');
         if (dom.modeWeb) dom.modeWeb.classList.remove('active');
-        dom.searchInput.placeholder = 'Search within your Bookmarks...';
-        dom.searchSuggestions.classList.add('hidden');
-        if (dom.searchInput.value.trim()) {
+        if (dom.searchInput) dom.searchInput.placeholder = 'Search bookmarks...';
+        if (dom.searchSuggestions) dom.searchSuggestions.classList.add('hidden');
+        if (dom.searchInput && dom.searchInput.value.trim()) {
           filterBookmarks(dom.searchInput.value.trim());
         }
-        dom.searchInput.focus();
+        if (dom.searchInput) dom.searchInput.focus();
       });
     }
 
@@ -3781,15 +3995,22 @@
     // Delegated CSP-compliant image error handling (Zero inline onerror handlers)
     document.addEventListener('error', (e) => {
       if (e.target && e.target.tagName === 'IMG') {
-        if (e.target.classList.contains('bm-favicon')) {
-          e.target.style.display = 'none';
-          const fallback = e.target.nextElementSibling;
-          if (fallback && fallback.classList.contains('bm-fallback-initial')) {
+        const img = e.target;
+        if (img.classList.contains('bm-favicon') ||
+            img.classList.contains('qa-icon') ||
+            img.classList.contains('keep-item-favicon')) {
+          img.style.display = 'none';
+          const fallback = img.nextElementSibling;
+          if (fallback && (
+            fallback.classList.contains('bm-fallback-initial') ||
+            fallback.classList.contains('qa-fallback-initial') ||
+            fallback.classList.contains('keep-fallback-initial')
+          )) {
             fallback.style.display = 'flex';
           }
-        } else if (e.target.classList.contains('engine-img-icon')) {
-          const initials = e.target.dataset.initials || 'SE';
-          const parent = e.target.parentElement;
+        } else if (img.classList.contains('engine-img-icon')) {
+          const initials = img.dataset.initials || 'SE';
+          const parent = img.parentElement;
           if (parent) parent.textContent = initials;
         }
       }
@@ -3828,15 +4049,57 @@
     }
 
     // Add Bookmark
-    dom.btnAddBookmark.addEventListener('click', openAddModal);
-    dom.btnEmptyAdd.addEventListener('click', openAddModal);
-    dom.btnCloseModal.addEventListener('click', closeModal);
-    dom.btnCancelModal.addEventListener('click', closeModal);
-    dom.bookmarkForm.addEventListener('submit', handleBookmarkFormSubmit);
-    dom.btnAutoFill.addEventListener('click', autoFillTitle);
+    if (dom.btnAddBookmark) dom.btnAddBookmark.addEventListener('click', openAddModal);
+    if (dom.btnEmptyAdd) dom.btnEmptyAdd.addEventListener('click', openAddModal);
+    if (dom.btnCloseModal) dom.btnCloseModal.addEventListener('click', closeModal);
+    if (dom.btnCancelModal) dom.btnCancelModal.addEventListener('click', closeModal);
+    if (dom.bookmarkForm) dom.bookmarkForm.addEventListener('submit', handleBookmarkFormSubmit);
+    if (dom.btnAutoFill) dom.btnAutoFill.addEventListener('click', autoFillTitle);
     if (dom.bmUrl) {
+      dom.bmUrl.addEventListener('paste', () => {
+        setTimeout(autoFillTitle, 20);
+      });
+      dom.bmUrl.addEventListener('input', autoFillTitle);
       dom.bmUrl.addEventListener('change', autoFillTitle);
       dom.bmUrl.addEventListener('blur', autoFillTitle);
+    }
+
+    if (dom.bmTitle) {
+      dom.bmTitle.addEventListener('input', () => {
+        delete dom.bmTitle.dataset.autofilled;
+      });
+    }
+
+    if (dom.bmTags) {
+      dom.bmTags.addEventListener('input', () => {
+        delete dom.bmTags.dataset.autofilled;
+      });
+    }
+
+    // Top Site URL Paste & Auto-fill
+    if (dom.topSiteUrl) {
+      function autoFillTopSiteName() {
+        const raw = dom.topSiteUrl.value.trim();
+        if (!raw) return;
+        try {
+          const url = raw.startsWith('http') ? raw : 'https://' + raw;
+          const hostname = new URL(url).hostname.replace(/^www\./i, '');
+          const domainName = hostname.split('.')[0] || '';
+          if (!dom.topSiteName.value || dom.topSiteName.dataset.autofilled === 'true') {
+            const capitalized = domainName.charAt(0).toUpperCase() + domainName.slice(1);
+            dom.topSiteName.value = capitalized;
+            dom.topSiteName.dataset.autofilled = 'true';
+          }
+        } catch (e) {}
+      }
+      dom.topSiteUrl.addEventListener('paste', () => setTimeout(autoFillTopSiteName, 20));
+      dom.topSiteUrl.addEventListener('input', autoFillTopSiteName);
+      dom.topSiteUrl.addEventListener('blur', autoFillTopSiteName);
+    }
+    if (dom.topSiteName) {
+      dom.topSiteName.addEventListener('input', () => {
+        delete dom.topSiteName.dataset.autofilled;
+      });
     }
 
     // Auto-Categorize Actions
@@ -3949,7 +4212,7 @@
             title: bm.title || getDomain(bm.url),
             url: bm.url,
             page: state.activePage || 'Personal',
-            category: detectCategory(bm.url, bm.title),
+            category: 'General',
             tags: 'browser-sync',
             favorite: false,
             visits: 0
@@ -4002,13 +4265,128 @@
       }
     });
 
-    // Customizer Drawer
-    dom.btnOpenCustomizer.addEventListener('click', () => {
-      dom.customizerDrawer.classList.remove('hidden');
+    function syncSettingsToggles() {
+      const toggleBg = document.getElementById('toggle-show-background');
+      if (toggleBg) toggleBg.checked = (state.wallpaper !== 'none');
+
+      const toggleTopSites = document.getElementById('toggle-top-sites');
+      if (toggleTopSites) toggleTopSites.checked = !state.topSitesHidden;
+
+      const togglePrivacy = document.getElementById('toggle-privacy-mode');
+      if (togglePrivacy) togglePrivacy.checked = !!state.privacyMode;
+
+      if (dom.btnTime12 && dom.btnTime24) {
+        dom.btnTime12.classList.toggle('active', state.timeFormat === '12');
+        dom.btnTime24.classList.toggle('active', state.timeFormat === '24');
+      }
+
+      const btnUnitC = document.getElementById('btn-unit-c');
+      const btnUnitF = document.getElementById('btn-unit-f');
+      if (btnUnitC && btnUnitF) {
+        btnUnitC.classList.toggle('active', (state.weatherUnit || 'C') === 'C');
+        btnUnitF.classList.toggle('active', state.weatherUnit === 'F');
+      }
+    }
+
+    // Settings Dialog
+    if (dom.btnOpenCustomizer) {
+      dom.btnOpenCustomizer.addEventListener('click', () => {
+        syncSettingsToggles();
+        dom.settingsModal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden';
+      });
+    }
+    if (dom.btnCloseSettings) {
+      dom.btnCloseSettings.addEventListener('click', () => {
+        dom.settingsModal.classList.add('hidden');
+        document.body.style.overflow = '';
+      });
+    }
+    // Close on backdrop click
+    if (dom.settingsModal) {
+      dom.settingsModal.addEventListener('click', (e) => {
+        if (e.target === dom.settingsModal) {
+          dom.settingsModal.classList.add('hidden');
+          document.body.style.overflow = '';
+        }
+      });
+    }
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && dom.settingsModal && !dom.settingsModal.classList.contains('hidden')) {
+        dom.settingsModal.classList.add('hidden');
+        document.body.style.overflow = '';
+      }
     });
-    dom.btnCloseCustomizer.addEventListener('click', () => {
-      dom.customizerDrawer.classList.add('hidden');
-    });
+
+    // Toggle: Show background image
+    const toggleBg = document.getElementById('toggle-show-background');
+    if (toggleBg) {
+      toggleBg.addEventListener('change', (e) => {
+        if (!e.target.checked) {
+          state.savedWallpaper = state.wallpaper || 'aurora';
+          applyWallpaper('none');
+          showToast('Background image hidden');
+        } else {
+          const restore = state.savedWallpaper || 'aurora';
+          applyWallpaper(restore);
+          showToast('Background image restored');
+        }
+      });
+    }
+
+    // Toggle: Show Top Sites
+    const toggleTopSites = document.getElementById('toggle-top-sites');
+    if (toggleTopSites) {
+      toggleTopSites.addEventListener('change', (e) => {
+        state.topSitesHidden = !e.target.checked;
+        storage.set({ topSitesHidden: state.topSitesHidden });
+        renderQuickAccess();
+        showToast(state.topSitesHidden ? 'Top sites hidden' : 'Top sites visible');
+      });
+    }
+
+    // Toggle: Privacy Mode
+    const togglePrivacy = document.getElementById('toggle-privacy-mode');
+    if (togglePrivacy) {
+      togglePrivacy.addEventListener('change', (e) => {
+        togglePrivacyMode(e.target.checked);
+      });
+    }
+
+    // Weather unit buttons inside Clock panel
+    const btnUnitC = document.getElementById('btn-unit-c');
+    const btnUnitF = document.getElementById('btn-unit-f');
+    if (btnUnitC) {
+      btnUnitC.addEventListener('click', () => {
+        if (state.weatherUnit !== 'C') toggleWeatherUnit();
+        syncSettingsToggles();
+      });
+    }
+    if (btnUnitF) {
+      btnUnitF.addEventListener('click', () => {
+        if (state.weatherUnit !== 'F') toggleWeatherUnit();
+        syncSettingsToggles();
+      });
+    }
+
+    // Settings Nav panel switching
+    if (dom.settingsModal) {
+      dom.settingsModal.querySelectorAll('.settings-nav-item').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const panelId = btn.dataset.panel;
+          // Update active nav item
+          dom.settingsModal.querySelectorAll('.settings-nav-item').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          // Show correct panel
+          dom.settingsModal.querySelectorAll('.settings-panel').forEach(p => p.classList.remove('active'));
+          const panel = dom.settingsModal.querySelector(`#panel-${panelId}`) || 
+                        (panelId === 'bookmarks' ? dom.settingsModal.querySelector('#panel-cards') : null) ||
+                        (panelId === 'cards' ? dom.settingsModal.querySelector('#panel-bookmarks') : null);
+          if (panel) panel.classList.add('active');
+        });
+      });
+    }
 
     // Theme selector cards
     dom.themeCards.forEach(card => {
@@ -4060,49 +4438,91 @@
     }
 
     // Wallpaper Preset cards
-    dom.wallpaperCards.forEach(card => {
-      card.addEventListener('click', () => {
-        applyWallpaper(card.dataset.wp, null);
+    if (dom.wallpaperCards) {
+      dom.wallpaperCards.forEach(card => {
+        card.addEventListener('click', () => {
+          applyWallpaper(card.dataset.wp, null);
+        });
       });
-    });
+    }
 
-    // Custom Wallpaper Upload
-    dom.wallpaperUploadInput.addEventListener('change', (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const base64 = event.target.result;
-        applyWallpaper('custom', base64);
-        showToast('Custom wallpaper applied!');
-      };
-      reader.readAsDataURL(file);
-    });
+    // Custom Wallpaper Upload (Images, Animated GIFs, MP4 / WebM live videos)
+    if (dom.wallpaperUploadInput) {
+      dom.wallpaperUploadInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        // Size check (warn if video is larger than 50MB to prevent storage exhaustion)
+        if (file.size > 50 * 1024 * 1024) {
+          showToast('File exceeds 50MB limit. Please choose a smaller video or image.');
+          return;
+        }
+
+        showToast('Processing custom wallpaper...');
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const fileData = event.target.result;
+          applyWallpaper('custom', fileData);
+          const isVideo = file.type.startsWith('video/') || file.name.endsWith('.mp4') || file.name.endsWith('.webm');
+          showToast(isVideo ? 'Live video wallpaper applied!' : 'Custom wallpaper applied!');
+        };
+        reader.onerror = () => {
+          showToast('Failed to load selected file.');
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    if (dom.btnRemoveCustomWallpaper) {
+      dom.btnRemoveCustomWallpaper.addEventListener('click', () => {
+        state.customWallpaperData = null;
+        storage.set({ customWallpaperData: null }, () => {
+          applyWallpaper('aurora');
+          showToast('Custom wallpaper removed. Restored Aurora.');
+        });
+      });
+    }
 
     // Sliders
-    dom.sliderBlur.addEventListener('input', (e) => {
-      applySliders(parseInt(e.target.value, 10), state.darkness);
-    });
-    dom.sliderDarkness.addEventListener('input', (e) => {
-      applySliders(state.blur, parseInt(e.target.value, 10));
-    });
+    if (dom.sliderBlur) {
+      dom.sliderBlur.addEventListener('input', (e) => {
+        applySliders(parseInt(e.target.value, 10), state.darkness);
+      });
+    }
+    if (dom.sliderDarkness) {
+      dom.sliderDarkness.addEventListener('input', (e) => {
+        applySliders(state.blur, parseInt(e.target.value, 10));
+      });
+    }
 
     // Quick Notes
-    dom.btnNotesToggle.addEventListener('click', () => {
-      dom.notesWidget.classList.toggle('hidden');
-      if (!dom.notesWidget.classList.contains('hidden')) {
-        dom.notesTextarea.focus();
-      }
-    });
-    dom.btnCloseNotes.addEventListener('click', () => {
-      dom.notesWidget.classList.add('hidden');
-    });
-    dom.notesTextarea.addEventListener('input', handleNotesInput);
-    dom.btnClearNotes.addEventListener('click', () => {
-      dom.notesTextarea.value = '';
-      storage.set({ quickNotes: '' });
-      dom.notesStatus.textContent = 'Cleared';
-    });
+    if (dom.btnNotesToggle) {
+      dom.btnNotesToggle.addEventListener('click', () => {
+        if (!dom.notesWidget) return;
+        dom.notesWidget.classList.toggle('hidden');
+        if (!dom.notesWidget.classList.contains('hidden') && dom.notesTextarea) {
+          dom.notesTextarea.focus();
+        }
+      });
+    }
+    if (dom.btnCloseNotes) {
+      dom.btnCloseNotes.addEventListener('click', () => {
+        if (dom.notesWidget) dom.notesWidget.classList.add('hidden');
+      });
+    }
+    if (dom.notesTextarea) {
+      dom.notesTextarea.addEventListener('input', handleNotesInput);
+    }
+    if (dom.btnClearNotes) {
+      dom.btnClearNotes.addEventListener('click', () => {
+        if (dom.notesTextarea) dom.notesTextarea.value = '';
+        storage.set({ quickNotes: '' });
+        if (dom.notesStatus) dom.notesStatus.textContent = 'Cleared';
+      });
+    }
+
+    // Initialize Sticky Note mobility & dragging
+    initNotesMobility();
 
     // Bug Report & Feedback Modal
     if (dom.btnReportBug) {
@@ -4134,7 +4554,10 @@
         closeModal();
         closeAddEngineModal();
         closeBugModal();
-        dom.customizerDrawer.classList.add('hidden');
+        if (dom.settingsModal && !dom.settingsModal.classList.contains('hidden')) {
+          dom.settingsModal.classList.add('hidden');
+          document.body.style.overflow = '';
+        }
         dom.notesWidget.classList.add('hidden');
         dom.searchSuggestions.classList.add('hidden');
         if (dom.enginePopover) dom.enginePopover.classList.add('hidden');
@@ -4166,14 +4589,24 @@
           cancelAnimationFrame(liveAnimId);
           liveAnimId = null;
         }
+        if (dom.bgVideo && !dom.bgVideo.paused) {
+          dom.bgVideo.pause();
+        }
       } else {
         if (state.wallpaper && state.wallpaper.startsWith('live-') && !liveAnimId) {
           runLiveWallpaperLoop();
+        }
+        if (state.wallpaper === 'custom' && dom.bgVideo && !dom.bgVideo.classList.contains('hidden') && dom.bgVideo.paused) {
+          dom.bgVideo.play().catch(() => {});
         }
       }
     });
   }
 
-  // Launch!
-  init();
+  // Safe launch after DOM is completely ready
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
 })();

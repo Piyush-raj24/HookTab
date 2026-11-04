@@ -1,6 +1,6 @@
 # HookTab - Visual Bookmarks & Dashboard for Chromium & Brave
 
-> **Hook your favorite web apps, bookmarks, and boards into an ultra-fast, local-first new tab dashboard.**  
+> **A local-first Chrome/Brave new tab dashboard with smart bookmark categorization, privacy mode, and theme studio**  
 > Built for Chromium browsers (Brave, Chrome, Edge, Arc, Opera) with **100% privacy, zero servers, and $0 cost**.
 
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-6366f1.svg)](https://developer.chrome.com/docs/extensions/mv3/intro/)

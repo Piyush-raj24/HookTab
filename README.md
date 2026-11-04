@@ -2,6 +2,7 @@
 
 > **A local-first Chrome/Brave new tab dashboard with smart bookmark categorization, privacy mode, and theme studio**  
 > Built for Chromium browsers (Brave, Chrome, Edge, Arc, Opera) with **100% privacy, zero servers, and $0 cost**.
+> **chrome-extension, javascript, manifest-v3, productivity**
 
 [![Manifest V3](https://img.shields.io/badge/Manifest-V3-6366f1.svg)](https://developer.chrome.com/docs/extensions/mv3/intro/)
 [![Local-First](https://img.shields.io/badge/Architecture-Local--First-10b981.svg)](#architecture)
